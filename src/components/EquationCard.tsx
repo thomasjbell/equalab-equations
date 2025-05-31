@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { ChevronDown, ChevronRight, RefreshCw } from "lucide-react";
 import { InlineMath } from "react-katex";
 import { Equation } from "../types/equation";
 import { formatNumber, parseNumberSafely } from "../lib/mathUtils";
@@ -58,6 +58,11 @@ export default function EquationCard({
     return results[variableSymbol] !== undefined && !values[variableSymbol];
   };
 
+  const handleReset = useCallback(() => {
+    setValues({});
+    setResults({});
+  }, [setValues, setResults]);
+
   return (
     <div
       className={`bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 hover:border-blue-300 p-6 ${
@@ -85,7 +90,7 @@ export default function EquationCard({
             <p className="text-sm text-gray-600">{equation.description}</p>
           )}
         </div>
-        <div className="ml-4">
+        <div className="ml-4 flex items-center">
           {isExpanded ? (
             <ChevronDown className="w-5 h-5 text-gray-400" />
           ) : (
@@ -97,7 +102,16 @@ export default function EquationCard({
       {/* Expanded Content */}
       {isExpanded && (
         <div className="mt-6 pt-6 border-t border-gray-200">
-          <h4 className="text-md font-medium text-gray-900 mb-4">Variables</h4>
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="text-md font-medium text-gray-900">Variables</h4>
+            <button
+              onClick={handleReset}
+              className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors duration-150"
+            >
+              <RefreshCw className="w-4 h-4 inline-block mr-1" />
+              Reset
+            </button>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {equation.variables.map((variable) => (
               <div key={variable.symbol} className="space-y-2">
@@ -112,6 +126,7 @@ export default function EquationCard({
                     handleInputChange(variable.symbol, e.target.value)
                   }
                   disabled={isCalculatedResult(variable.symbol)}
+                  
                   className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${
                     isCalculatedResult(variable.symbol)
                       ? "bg-green-50 border-green-300 text-green-800 font-medium"

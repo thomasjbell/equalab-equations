@@ -1,8 +1,8 @@
+// types/equation.ts
 export interface Variable {
   name: string;
   symbol: string;
-  unit?: string;
-  value?: number;
+  unit: string;
 }
 
 export interface Equation {
@@ -10,7 +10,7 @@ export interface Equation {
   name: string;
   category: string;
   latex: string;
-  description?: string;
+  description: string;
   variables: Variable[];
   solve: (values: Record<string, number>) => Record<string, number>;
 }
