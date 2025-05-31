@@ -1,12 +1,11 @@
-import "./globals.css";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import "../globals.css";
+import Navbar from "../../components/Navbar";
 // import { Inter } from 'next/font/google'
 
 // const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: "EquaLab Equations",
+  title: "EquaLab Equations Generator",
   description: "Interactive equation solver and calculator",
 };
 
@@ -26,9 +25,8 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Navbar />
+        
         {children}
-        <Footer />
       </body>
     </html>
   );

@@ -147,4 +147,24 @@ export const equations: Equation[] = [
       return result;
     },
   },
+    {
+    id: 'pythag',
+    name: 'Pythagoras',
+    category: 'Geometry',
+    latex: 'a^2=b^2+c^2', // Escape backslashes for LaTeX
+    description: `Solves Pythagoras' Theorem`,
+    variables: [
+      { name: 'Coefficient a', symbol: 'a', unit: 'units' },
+      { name: 'Coefficient b', symbol: 'b', unit: 'units' },
+      { name: 'Coeffcient c', symbol: 'c', unit: 'units' }
+    ],
+    solve: (values) => {
+      const {a, b, c} = values;
+      const result: Record<string, number> = {};
+      if (a !== undefined && b !== undefined && c === undefined) result.c = Math.sqrt((a ** 2) - (b ** 2));
+      else if (a !== undefined && b === undefined && c !== undefined) result.b = Math.sqrt(a ** 2 - c ** 2);
+      else if (a === undefined && b !== undefined && c !== undefined) result.a = Math.sqrt(b ** 2 + c ** 2);
+      return result;
+    },
+  },
 ];

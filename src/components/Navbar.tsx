@@ -1,7 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Menu, X, Calculator, BookOpen, Settings, User } from 'lucide-react';
+import { useState } from "react";
+import {
+  Menu,
+  X,
+  Calculator,
+  BookOpen,
+  Settings,
+  User,
+  PlusSquare,
+} from "lucide-react";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -29,22 +37,22 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a 
-              href="#" 
-              className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
-            >
-              <Calculator className="w-4 h-4" />
-              <span>Calculator</span>
-            </a>
-            <a 
-              href="#" 
+            <a
+              href="/"
               className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
             >
               <BookOpen className="w-4 h-4" />
               <span>Library</span>
             </a>
-            <a 
-              href="#" 
+            <a
+              href="/add"
+              className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
+            >
+              <PlusSquare className="w-4 h-4" />
+              <span>Add Equation</span>
+            </a>
+            <a
+              href="#"
               className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors font-medium"
             >
               <Settings className="w-4 h-4" />
