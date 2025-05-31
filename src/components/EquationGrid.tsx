@@ -51,20 +51,12 @@ export default function EquationGrid() {
             placeholder="Search equations, categories, or descriptions..."
           />
         </div>
-
+      {/* Mobile Version */}
         <div className="md:hidden sm:w-48 flex items-center gap-2">
           <SortDropdown value={sortBy} onChange={setSortBy} />
-          <button
-            onClick={toggleDisplayMode}
-            className="appearance-none bg-white border border-gray-300 rounded-xl px-4 py-2 outline-none transition-all shadow-sm"
-          >
-            {displayMode === "list" ? (
-              <Squares2X2Icon className="h-8 w-8" />
-            ) : (
-              <ListBulletIcon className="h-8 w-8" />
-            )}
-          </button>
+          
         </div>
+        {/* Desktop Version */}
         <div className="hidden md:flex">
           <div className="sm:w-48 md:flex items-center gap-2">
             <SortDropdown value={sortBy} onChange={setSortBy} />
