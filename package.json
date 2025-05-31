@@ -1,7 +1,7 @@
 {
   "name": "equalab-equations",
   "version": "0.1.0",
-  "type": "module",
+
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -29,6 +29,6 @@
     "eslint-config-next": "14.0.0",
     "postcss": "^8.5.4",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5"
+    "typescript": "^5.8.3"
   }
 }
