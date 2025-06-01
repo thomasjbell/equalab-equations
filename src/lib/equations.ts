@@ -67,52 +67,212 @@ export const equations: Equation[] = [
     },
   },
   {
-    id: "kinematic-equation",
-    name: "Kinematic Equation",
+    id: "kinematics",
+    name: "Kinematics (SUVAT)",
     category: "Physics",
-    latex: "v = u + at",
-    description: "Final velocity with constant acceleration",
+    latex:
+      "v = u + at \\: \\: | \\: \\: s = ut + \\frac{1}{2}at^2 \\: \\: | \\: \\: s = vt - \\frac{1}{2}at^2 \\: \\: | \\: \\: v^2 = u^2 + 2as \\: \\: | \\: \\: s = \\frac{1}{2}(u + v) t",
+    description: "All SUVAT equations",
     variables: [
-      { name: "v", symbol: "v", unit: "m s⁻¹" },
+      { name: "s", symbol: "s", unit: "m" },
       { name: "u", symbol: "u", unit: "m s⁻¹" },
+      { name: "v", symbol: "v", unit: "m s⁻¹" },
       { name: "a", symbol: "a", unit: "m s⁻²" },
       { name: "t", symbol: "t", unit: "s" },
     ],
     solve: (values) => {
-      const { v, u, a, t } = values;
+      const { s, u, v, a, t } = values;
       const result: Record<string, number> = {};
-
+      // SV
       if (
         u !== undefined &&
         a !== undefined &&
         t !== undefined &&
-        v === undefined
+        v === undefined &&
+        s === undefined
       ) {
         result.v = u + a * t;
       }
       if (
+        u !== undefined &&
+        a !== undefined &&
+        t !== undefined &&
+        v === undefined &&
+        s === undefined
+      ) {
+        result.s = u * t + 0.5 * a * (t * t);
+      }
+      // SU
+      if (
         v !== undefined &&
         a !== undefined &&
         t !== undefined &&
-        u === undefined
+        u === undefined &&
+        s === undefined
       ) {
         result.u = v - a * t;
       }
       if (
         v !== undefined &&
-        u !== undefined &&
+        a !== undefined &&
         t !== undefined &&
-        a === undefined
+        u === undefined &&
+        s === undefined
+      ) {
+        result.s = v * t - 0.5 * a * (t * t);
+      }
+      // SA
+      if (
+        u !== undefined &&
+        v !== undefined &&
+        t !== undefined &&
+        a === undefined &&
+        s === undefined
       ) {
         result.a = (v - u) / t;
       }
       if (
-        v !== undefined &&
         u !== undefined &&
+        v !== undefined &&
+        t !== undefined &&
+        a === undefined &&
+        s === undefined
+      ) {
+        result.s = 0.5 * (u + v) * t;
+      }
+      // ST
+      if (
+        u !== undefined &&
+        v !== undefined &&
         a !== undefined &&
-        t === undefined
+        t === undefined &&
+        s === undefined
       ) {
         result.t = (v - u) / a;
+      }
+      if (
+        u !== undefined &&
+        v !== undefined &&
+        a !== undefined &&
+        t === undefined &&
+        s === undefined
+      ) {
+        result.s = 0.5 * (u + v) * (v - u) / a;
+      }
+      // UV
+      if (
+        s !== undefined &&
+        a !== undefined &&
+        t !== undefined &&
+        u === undefined &&
+        v === undefined
+      ) {
+        result.u = s - 0.5 * a * t;
+      }
+      if (
+        s !== undefined &&
+        a !== undefined &&
+        t !== undefined &&
+        u === undefined &&
+        v === undefined
+      ) {
+        result.v = s + 0.5 * a * t;
+      }
+      // UA
+      if (
+        s !== undefined &&
+        v !== undefined &&
+        t !== undefined &&
+        a === undefined &&
+        u === undefined
+      ) {
+        result.a = ((2 * v * t) - 2 * s) / (t * t);
+      }
+      if (
+        s !== undefined &&
+        v !== undefined &&
+        t !== undefined &&
+        a === undefined &&
+        u === undefined
+      ) {
+        result.u = ( (0 - (t * v)) + 2 * s) / t;
+    
+      }
+      // UT
+      if (
+        s !== undefined &&
+        v !== undefined &&
+        a !== undefined &&
+        u === undefined &&
+        t === undefined
+      ) {
+        result.u = Math.sqrt((-(2 * a * s))+ v * v);
+      }
+      if (
+        s !== undefined &&
+        v !== undefined &&
+        a !== undefined &&
+        u === undefined &&
+        t === undefined
+      ) {
+        result.t = ((- - v) + Math.sqrt((v * v) - (2 * a * s))) / a;
+      }
+      // VA
+      if (
+        s !== undefined &&
+        u !== undefined &&
+        t !== undefined &&
+        v === undefined &&
+        a === undefined
+      ) {
+        result.a = (((-2) * t * u) + (2 * s)) / (t * t);
+      }
+      if (
+        s !== undefined &&
+        u !== undefined &&
+        t !== undefined &&
+        v === undefined &&
+        a === undefined
+      ) {
+        result.v = (((-t) * u) + (2 * s)) / t;
+      }
+      // VT
+      if (
+        s !== undefined &&
+        u !== undefined &&
+        a !== undefined &&
+        v === undefined &&
+        t === undefined
+      ) {
+        result.v = Math.sqrt((u * u) + (2 * a * s));
+      }
+      if (
+        s !== undefined &&
+        u !== undefined &&
+        a !== undefined &&
+        v === undefined &&
+        t === undefined
+      ) {
+        result.t = ((- u) + Math.sqrt((u * u) + (2 * a * s))) / a;
+      }
+      // AT
+      if (
+        s !== undefined &&
+        u !== undefined &&
+        v !== undefined &&
+        t === undefined &&
+        a === undefined
+      ) {
+        result.a = ((v * v) - (u * u)) / (2 * s);
+      }
+      if (
+        s !== undefined &&
+        u !== undefined &&
+        v !== undefined &&
+        t === undefined &&
+        a === undefined
+      ) {
+        result.t = (2 * s) / (v + u);
       }
 
       return result;

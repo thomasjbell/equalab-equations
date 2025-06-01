@@ -24,6 +24,7 @@ export default function RootLayout({
           integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn"
           crossOrigin="anonymous"
         />
+        <link rel="icon" href="favicon.svg" type="image/svg+xml" />
       </head>
       <body>
         <Navbar />

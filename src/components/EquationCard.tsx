@@ -65,7 +65,7 @@ export default function EquationCard({
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 hover:border-blue-300 p-6 ${
+      className={`bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-sm transition-all duration-200 hover:border-cyan-400 p-6 ${
         isExpanded ? "shadow-lg border-blue-400" : ""
       }`}
     >
@@ -79,7 +79,7 @@ export default function EquationCard({
             <h3 className="text-lg font-semibold text-gray-900">
               {equation.name}
             </h3>
-            <span className="px-2 py-1 bg-primary-100 text-primary-700 text-sm rounded-full">
+            <span className="px-2 py-1 bg-cyan-50 text-cyan-700 text-sm rounded-full">
               {equation.category}
             </span>
           </div>
@@ -127,7 +127,7 @@ export default function EquationCard({
                   }
                   disabled={isCalculatedResult(variable.symbol)}
                   
-                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none transition-all ${
                     isCalculatedResult(variable.symbol)
                       ? "bg-green-50 border-green-300 text-green-800 font-medium"
                       : ""

@@ -5,22 +5,32 @@ import EquationCard from "./EquationCard";
 import SearchBar from "./SearchBar";
 import SortDropdown from "./SortDropdown";
 import { equations } from "../lib/equations";
-import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/outline"; // Assuming you have Heroicons installed
+import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 
 export default function EquationGrid() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
-  const [expandedCard, setExpandedCard] = useState<string | null>(null);
-  const [displayMode, setDisplayMode] = useState<"list" | "grid">("list"); // 'list' | 'grid' state
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [displayMode, setDisplayMode] = useState<"list" | "grid">("list");
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  const uniqueCategories = useMemo(() => {
+    return [...new Set(equations.map((eq) => eq.category))];
+  }, [equations]);
 
   const filteredAndSortedEquations = useMemo(() => {
-    let filtered = equations.filter(
-      (equation) =>
+    let filtered = equations.filter((equation) => {
+      const searchMatch =
         equation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         equation.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (equation.description &&
-          equation.description.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+          equation.description
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()));
+      const tagMatch =
+        selectedTag === null || equation.category === selectedTag;
+      return searchMatch && tagMatch;
+    });
 
     return filtered.sort((a, b) => {
       if (sortBy === "name") {
@@ -30,47 +40,85 @@ export default function EquationGrid() {
       }
       return 0;
     });
-  }, [searchTerm, sortBy]);
+  }, [searchTerm, sortBy, selectedTag]);
 
   const handleCardToggle = (equationId: string) => {
-    setExpandedCard(expandedCard === equationId ? null : equationId);
+    const newExpandedCards = new Set(expandedCards);
+    if (newExpandedCards.has(equationId)) {
+      newExpandedCards.delete(equationId);
+    } else {
+      newExpandedCards.add(equationId);
+    }
+    setExpandedCards(newExpandedCards);
   };
 
   const toggleDisplayMode = () => {
     setDisplayMode((prevMode) => (prevMode === "list" ? "grid" : "list"));
   };
 
+  const handleTagSelect = (tag: string | null) => {
+    setSelectedTag(tag);
+  };
+
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center">
-        <div className="flex-1">
-          <SearchBar
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder="Search equations, categories, or descriptions..."
-          />
-        </div>
-      {/* Mobile Version */}
-        <div className="md:hidden sm:w-48 flex items-center gap-2">
-          <SortDropdown value={sortBy} onChange={setSortBy} />
-          
-        </div>
-        {/* Desktop Version */}
-        <div className="hidden md:flex">
-          <div className="sm:w-48 md:flex items-center gap-2">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-row flex-wrap items-center gap-4">
+          <div className="flex-1 min-w-0">
+            <SearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search equations, categories, or descriptions..."
+            />
+          </div>
+          {/* Mobile Version - Sort */}
+          <div className="md:hidden sm:w-auto">
             <SortDropdown value={sortBy} onChange={setSortBy} />
           </div>
+          {/* Desktop Version - Sort and Display Mode */}
+          <div className="hidden md:flex items-center gap-2">
+            <div className="sm:w-auto">
+              <SortDropdown value={sortBy} onChange={setSortBy} />
+            </div>
+            <button
+              onClick={toggleDisplayMode}
+              className="appearance-none bg-white border border-gray-300 rounded-xl px-4 py-3 outline-none transition-all shadow-sm"
+            >
+              {displayMode === "list" ? (
+                <Squares2X2Icon className="h-6 w-6" />
+              ) : (
+                <ListBulletIcon className="h-6 w-6" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Tag List */}
+        <div className="overflow-x-auto whitespace-nowrap">
           <button
-            onClick={toggleDisplayMode}
-            className="appearance-none bg-white border border-gray-300 rounded-xl px-4 py-2 outline-none transition-all shadow-sm"
+            className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium  ${
+              selectedTag === null
+                ? "bg-cyan-600 text-white"
+                : "bg-slate-200 text-cyan-900 hover:bg-gray-300"
+            }`}
+            onClick={() => handleTagSelect(null)}
           >
-            {displayMode === "list" ? (
-              <Squares2X2Icon className="h-8 w-8" />
-            ) : (
-              <ListBulletIcon className="h-8 w-8" />
-            )}
+            All
           </button>
+          {uniqueCategories.map((tag) => (
+            <button
+              key={tag}
+              className={`inline-flex items-center rounded-full px-3 py-1 ml-2 text-sm font-medium  ${
+                selectedTag === tag
+                  ? "bg-cyan-600 text-white"
+                  : "bg-slate-200 text-cyan-900 hover:bg-gray-300"
+              }`}
+              onClick={() => handleTagSelect(tag)}
+            >
+              {tag}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -78,6 +126,7 @@ export default function EquationGrid() {
       <div className="text-sm text-gray-600">
         {filteredAndSortedEquations.length} equation
         {filteredAndSortedEquations.length !== 1 ? "s" : ""} found
+        {selectedTag && ` in category "${selectedTag}"`}
       </div>
 
       {/* Equation Cards */}
@@ -90,11 +139,9 @@ export default function EquationGrid() {
       >
         {filteredAndSortedEquations.map((equation) => (
           <div key={equation.id}>
-            {" "}
-            {/* Added a wrapping div for grid layout */}
             <EquationCard
               equation={equation}
-              isExpanded={expandedCard === equation.id}
+              isExpanded={expandedCards.has(equation.id)}
               onToggle={() => handleCardToggle(equation.id)}
             />
           </div>
@@ -104,7 +151,8 @@ export default function EquationGrid() {
       {filteredAndSortedEquations.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">
-            No equations found matching your search.
+            No equations found matching your search
+            {selectedTag && ` in category "${selectedTag}"`}.
           </p>
         </div>
       )}
