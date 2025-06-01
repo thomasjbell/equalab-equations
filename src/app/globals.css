@@ -2,10 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Questrial&display=swap');
+
 .katex {
   font-size: 1.1em;
 }
 
 .katex-display {
   margin: 0.5em 0;
+}
+
+body {
+  font-family: 'Questrial', sans-serif;
 }
