@@ -1,6 +1,7 @@
+// lib/equations.ts
 import { Equation } from "@/types/equation";
 
-export const equations: Equation[] = [
+export const equations: Equation [] = [
   {
     id: "quadratic-formula",
     name: "Quadratic Formula",
@@ -8,9 +9,9 @@ export const equations: Equation[] = [
     latex: "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}",
     description: "Solves quadratic equations of the form ax² + bx + c = 0",
     variables: [
-      { name: "a", symbol: "a", unit: "" },
-      { name: "b", symbol: "b", unit: "" },
-      { name: "c", symbol: "c", unit: "" },
+      { name: "Coefficient a", symbol: "a", unit: "" },
+      { name: "Coefficient b", symbol: "b", unit: "" },
+      { name: "Coefficient c", symbol: "c", unit: "" },
       { name: "x₁", symbol: "x_1", unit: "" },
       { name: "x₂", symbol: "x_2", unit: "" },
     ],
@@ -47,13 +48,13 @@ export const equations: Equation[] = [
   {
     id: "ohms-law",
     name: "Ohm's Law",
-    category: "Physics",
+    category: "Electronics",
     latex: "V = I \\cdot R",
     description: "Relationship between voltage, current, and resistance",
     variables: [
-      { name: "V", symbol: "V", unit: "V" },
-      { name: "I", symbol: "I", unit: "A" },
-      { name: "R", symbol: "R", unit: "Ω" },
+      { name: "Voltage", symbol: "V", unit: "V" },
+      { name: "Current", symbol: "I", unit: "A" },
+      { name: "Resistance", symbol: "R", unit: "Ω" },
     ],
     solve: (values) => {
       const { V, I, R } = values;
@@ -74,11 +75,11 @@ export const equations: Equation[] = [
       "v = u + at \\: \\: | \\: \\: s = ut + \\frac{1}{2}at^2 \\: \\: | \\: \\: s = vt - \\frac{1}{2}at^2 \\: \\: | \\: \\: v^2 = u^2 + 2as \\: \\: | \\: \\: s = \\frac{1}{2}(u + v) t",
     description: "All SUVAT equations",
     variables: [
-      { name: "s", symbol: "s", unit: "m" },
-      { name: "u", symbol: "u", unit: "m s⁻¹" },
-      { name: "v", symbol: "v", unit: "m s⁻¹" },
-      { name: "a", symbol: "a", unit: "m s⁻²" },
-      { name: "t", symbol: "t", unit: "s" },
+      { name: "Displacement", symbol: "s", unit: "m" },
+      { name: "Initial Velocity", symbol: "u", unit: "m s⁻¹" },
+      { name: "Final Velocity", symbol: "v", unit: "m s⁻¹" },
+      { name: "Acceleration", symbol: "a", unit: "m s⁻²" },
+      { name: "Time", symbol: "t", unit: "s" },
     ],
     solve: (values) => {
       const { s, u, v, a, t } = values;
@@ -348,4 +349,109 @@ export const equations: Equation[] = [
       return result;
     },
   },
+    {
+    id: 'linear-inter',
+    name: 'Linear Interpolation',
+    category: 'Statistics',
+  latex: '\\text{Median} =\\text{Lower Bound} + (\\frac{\\text{Distance into Class}}{\\text{Class Width}} \\times \\text{Class Width})', // Escape backslashes for LaTeX
+    description: 'Uses linear interpolation to find median value in grouped data (remember to use halves if non-inclusive)',
+    variables: [
+      { name: 'Lower Bound', symbol: 'lb', unit: 'units' },
+      { name: 'Distance into Class', symbol: 'dc', unit: '' },
+      { name: 'Class Width', symbol: 'cw', unit: 'units' },
+      { name: 'Median', symbol: 'median', unit: 'units' },
+    ],
+    solve: (values) => {
+      const { lb, dc, cw } = values;
+      const result: Record<string, number> = {};
+  
+      if (lb !== undefined && dc !== undefined && cw !== undefined) {
+        result.median = lb + (dc / cw) * cw;
+      }
+  
+      return result;
+    },
+  },
+    {
+    id: 'sphere-vol',
+    name: 'Volume of a Sphere',
+    category: 'Geometry',
+    latex: 'V = \\frac{4}{3} \\pi r^3', // Escape backslashes for LaTeX
+    description: 'Find the volume of a uniform sphere',
+    variables: [
+      { name: 'Volume', symbol: 'V', unit: 'units³' },
+      { name: 'Radius', symbol: 'r', unit: 'units' }
+    ],
+    solve: (values) => {
+      const { V, r } = values;
+      const result: Record<string, number> = {};
+  
+      if (V !== undefined && r === undefined) {
+        result.r = Math.pow((3 * V) / (4 * Math.PI), 1 / 3);
+      } else if (V === undefined && r !== undefined) {
+        result.V = (4 * Math.PI * Math.pow(r, 3)) / 3;
+      }
+  
+      return result;
+    },
+  },
+    {
+    id: 'pot-divider',
+    name: 'Potential Divider',
+    category: 'Electronics',
+    latex: 'V_{out}=\\frac{R_{2}}{R_{1}+R_{2}}\\times V_{in}', // Escape backslashes for LaTeX
+    description: 'Find any of the variables in the standard 2-Resistor, 2-Voltage potential divider equation',
+    variables: [
+      { name: 'Vₒᵤₜ', symbol: 'Vout', unit: 'V' },
+      { name: 'Vᵢₙ', symbol: 'Vin', unit: 'V' },
+      { name: 'R₁', symbol: 'R_1', unit: 'Ω' },
+      { name: 'R₂', symbol: 'R_2', unit: 'Ω' }
+    ],
+    solve: (values) => {
+      const { Vout, Vin, R_1, R_2 } = values;
+      const result: Record<string, number> = {};
+  
+      if (Vout !== undefined && Vin !== undefined && R_1 !== undefined && R_2 === undefined) {
+        result.R_2 = (Vout * R_1) / Vin;
+      } else if (Vout !== undefined && Vin !== undefined && R_1 === undefined && R_2 !== undefined) {
+        result.R_1 = (Vout * R_2) / Vin;
+      } else if (Vout === undefined && Vin !== undefined && R_1 !== undefined && R_2 !== undefined) {
+        result.Vout = (R_2 / (R_1 + R_2)) * Vin;
+      } else if (Vout !== undefined && Vin === undefined && R_1 !== undefined && R_2 !== undefined) {
+        result.Vin = (Vout * R_1) / R_2;
+      }
+  
+      return result;
+    },
+  },
+    {
+    id: 'wire-resistivity',
+    name: 'Resistvity of a Wire',
+    category: 'Electronics',
+    latex: 'R=\\frac{\\rho L}{A}', // Escape backslashes for LaTeX
+    description: 'Find any of the variables in the resistivity of a uniform wire equation',
+    variables: [
+      { name: 'Resistance', symbol: 'R', unit: 'Ω' },
+      { name: 'Resistivity', symbol: 'rho', unit: 'Ω m' },
+      { name: 'Length', symbol: 'L', unit: 'm' },
+      { name: 'Cross Sectional Area', symbol: 'A', unit: 'm²' }
+    ],
+    solve: (values) => {
+      const { R, rho, L, A } = values;
+      const result: Record<string, number> = {};
+  
+      if (R !== undefined && rho === undefined && L !== undefined && A !== undefined) {
+        result.rho = R * A / L;
+      } else if (R === undefined && rho !== undefined && L !== undefined && A !== undefined) {
+        result.R = rho * L / A;
+      } else if (R !== undefined && rho !== undefined && L === undefined && A !== undefined) {
+        result.L = R * A / rho;
+      } else if (R !== undefined && rho !== undefined && L !== undefined && A === undefined) {
+        result.A = R * L / rho;
+      }
+  
+      return result;
+    },
+  },
+
 ];

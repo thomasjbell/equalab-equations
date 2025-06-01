@@ -1,3 +1,4 @@
+// components/EquationCard.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -106,7 +107,7 @@ export default function EquationCard({
             <h4 className="text-md font-medium text-gray-900">Variables</h4>
             <button
               onClick={handleReset}
-              className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors duration-150"
+              className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md text-sm transition-colors duration-150"
             >
               <RefreshCw className="w-4 h-4 inline-block mr-1" />
               Reset
@@ -126,8 +127,7 @@ export default function EquationCard({
                     handleInputChange(variable.symbol, e.target.value)
                   }
                   disabled={isCalculatedResult(variable.symbol)}
-                  
-                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-transparent outline-none transition-all ${
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-cyan-600 focus:border-transparent outline-none transition-all ${
                     isCalculatedResult(variable.symbol)
                       ? "bg-green-50 border-green-300 text-green-800 font-medium"
                       : ""

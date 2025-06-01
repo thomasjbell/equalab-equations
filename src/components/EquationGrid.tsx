@@ -1,3 +1,4 @@
+// components/EquationGrid.tsx
 "use client";
 
 import { useState, useMemo } from "react";
@@ -77,7 +78,7 @@ export default function EquationGrid() {
             <SortDropdown value={sortBy} onChange={setSortBy} />
           </div>
           {/* Desktop Version - Sort and Display Mode */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-4">
             <div className="sm:w-auto">
               <SortDropdown value={sortBy} onChange={setSortBy} />
             </div>
@@ -86,9 +87,9 @@ export default function EquationGrid() {
               className="appearance-none bg-white border border-gray-300 rounded-xl px-4 py-3 outline-none transition-all shadow-sm"
             >
               {displayMode === "list" ? (
-                <Squares2X2Icon className="h-6 w-6" />
+                <Squares2X2Icon color="#164e63" className="h-6 w-6" />
               ) : (
-                <ListBulletIcon className="h-6 w-6" />
+                <ListBulletIcon color="#164e63" className="h-6 w-6" />
               )}
             </button>
           </div>
