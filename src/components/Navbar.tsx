@@ -37,7 +37,7 @@ export default function Navbar() {
                   />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">EquaLab</h1>
+                  <h1 className="text-xl font-bold text-gray-900"><span className="bg-gradient-to-r from-cyan-700 to-cyan-600 text-transparent bg-clip-text">EquaLab</span></h1>
                   <p className="text-xs text-gray-500 -mt-1">Equations</p>
                 </div>
               </div>

@@ -7,7 +7,7 @@ const Footer = () => {
     <footer className="bg-cyan-900 py-12 text-cyan-50 text-md">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-4 sm:px-6 lg:px-8">
         <div>
-          <h6 className="font-semibold text-3xl text-cyan-200 mb-2">EquaLab</h6>
+          <h6 className="font-semibold text-3xl text-cyan-200 mb-2"><span className="bg-gradient-to-r from-cyan-300 to-cyan-200 text-transparent bg-clip-text">EquaLab</span></h6>
           <p className="mb-1">
             EquaLab is a free platform with online tools for engineers and
             scientists.
