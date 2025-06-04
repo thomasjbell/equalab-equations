@@ -615,4 +615,64 @@ export const equations: Equation[] = [
       return result;
     },
   },
+    {
+    id: 'standard-dev',
+    name: 'Standard Deviation',
+    category: 'Statistics',
+    latex: '\\sigma=\\sqrt{ \\frac{\\Sigma x^2}{n} -\\bar{x}^2}', // Escape backslashes for LaTeX
+    description: 'Find the any of the variables from the standard deviation formula',
+    variables: [
+      { name: 'Standard Deviation', symbol: 'sd', unit: 'units' },
+      { name: 'Sum of x²', symbol: 'sx', unit: '' },
+      { name: 'Population Size (n)', symbol: 'n', unit: '' },
+      { name: 'Mean', symbol: 'xbar', unit: 'units' }
+    ],
+    solve: (values) => {
+      const { sd, sx, n, xbar } = values;
+      const result: Record<string, number> = {};
+      
+      if (sd !== undefined && sx === undefined && n !== undefined && xbar !== undefined) {
+        result.sx = ((sd ** 2) + (xbar ** 2)) * n;
+      } else if (sd === undefined && sx !== undefined && n !== undefined && xbar !== undefined) {
+        result.sd = Math.sqrt((sx / n) - (xbar ** 2));
+      } else if (sd !== undefined && sx !== undefined && n === undefined && xbar !== undefined) {
+        result.n = sx / ((sd ** 2) + (xbar ** 2));
+      } else if (sd !== undefined && sx !== undefined && n !== undefined && xbar === undefined) {
+        result.xbar = Math.sqrt((sx / n) - (sd ** 2));
+      }
+      
+      return result;
+    },
+  },
+    {
+    id: 'snells-law',
+    name: `Snell's Law (Refractive Index)`,
+    category: 'Physics',
+    latex: 'n_1 \\sin\\theta_1 = n_2\\sin\\theta_2', // Escape backslashes for LaTeX
+    description: `Find the any of the variables from Snell's Law, comparing refractive indices; angle units are respective`,
+    variables: [
+      { name: 'Refractive index 1', symbol: 'n1', unit: '' },
+      { name: 'Refective index 2', symbol: 'n2', unit: '' },
+      { name: 'Angle of Refraction 1', symbol: 'r1', unit: 'deg' },
+      { name: 'Angle of Refraction 2', symbol: 'r2', unit: 'deg' }
+    ],
+    solve: (values) => {
+      const { n1, n2, r1, r2 } = values;
+      const result: Record<string, number> = {};
+      
+      if (n1 !== undefined && n2 === undefined && r1 !== undefined && r2 !== undefined) {
+        result.n2 = (n1 * Math.sin(r1 * (Math.PI / 180))) / Math.sin(r2 * (Math.PI / 180));
+      } else if (n1 === undefined && n2 !== undefined && r1 !== undefined && r2 !== undefined) {
+        result.n1 = (n2 * Math.sin(r2 * (Math.PI / 180))) / Math.sin(r1 * (Math.PI / 180));
+      } else if (n1 !== undefined && n2 !== undefined && r1 === undefined && r2 !== undefined) {
+        result.r1 = Math.asin(n1 * Math.sin(r2 * (Math.PI / 180)) / n2) * (180 / Math.PI);
+      } else if (n1 !== undefined && n2 !== undefined && r1 !== undefined && r2 === undefined) {
+        result.r2 = Math.asin(n2 * Math.sin(r1 * (Math.PI / 180)) / n1) * (180 / Math.PI);
+      }
+      
+      return result;
+      
+    },
+  },
+  
 ];
