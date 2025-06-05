@@ -10,7 +10,7 @@ import {
   User,
   PlusSquare,
 } from "lucide-react";
-import Logo from "/logo.png";
+import LittleLogo from "./ui/LittleLogo";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -27,17 +27,9 @@ export default function Navbar() {
           <a href="/">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 drop-shadow rounded-lg flex items-center justify-center">
-                  <img
-                    className="rounded-sm"
-                    src="/logo.png"
-                    alt="EquaLab Logo"
-                    width={32}
-                    height={32}
-                  />
-                </div>
+                <LittleLogo className="w-10 h-10" />
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900"><span className="bg-gradient-to-r from-cyan-700 to-cyan-600 text-transparent bg-clip-text">EquaLab</span></h1>
+                  <h1 className="text-xl font-bold text-gray-900"><span className="bg-gradient-to-r from-cyan-800 to-cyan-600 text-transparent bg-clip-text">EquaLab</span></h1>
                   <p className="text-xs text-gray-500 -mt-1">Equations</p>
                 </div>
               </div>
