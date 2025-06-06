@@ -7,6 +7,7 @@ import SearchBar from "./SearchBar";
 import SortDropdown from "./SortDropdown";
 import { equations } from "../lib/equations";
 import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
 
 export default function EquationGrid() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -63,6 +64,20 @@ export default function EquationGrid() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h2 className="text-4xl font-bold text-cyan-950 text-center mb-4">Equation Library</h2>
+        <motion.div
+            className="bg-gradient-to-r from-cyan-800 to-cyan-500 h-0.5 w-1/3 md:w-1/4 mx-auto rounded-full"
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            transition={{
+              duration: 0.6, // Was 0.8
+              ease: "easeInOut",
+              delay: 0.1 // Was 0.2
+            }}
+            viewport={{ once: true }}
+          />
+      </div>
       {/* Controls */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-row flex-wrap items-center gap-4">

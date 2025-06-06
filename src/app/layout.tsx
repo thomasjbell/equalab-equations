@@ -1,9 +1,9 @@
 import "./globals.css";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-// import { Inter } from 'next/font/google'
+import { Inter } from 'next/font/google'
 
-// const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
   title: "EquaLab Equations",
@@ -26,7 +26,7 @@ export default function RootLayout({
         />
         <link rel="icon" href="favicon.svg" type="image/svg+xml" />
       </head>
-      <body>
+      <body className={inter.className}>
         <Navbar />
         {children}
         <Footer />
