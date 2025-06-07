@@ -28,7 +28,7 @@ export const equations: Equation[] = [
         return {}; // Return empty object instead of undefined values
       }
 
-      const discriminant = b * b - 4 * a * c;
+      const discriminant = b ** 2 - 4 * a * c;
 
       if (discriminant < 0) {
         return {}; // No real solutions - return empty object
@@ -73,7 +73,8 @@ export const equations: Equation[] = [
     category: "Physics",
     latex:
       "v = u + at \\: \\: | \\: \\: s = ut + \\frac{1}{2}at^2 \\: \\: | \\: \\: s = vt - \\frac{1}{2}at^2 \\: \\: | \\: \\: v^2 = u^2 + 2as \\: \\: | \\: \\: s = \\frac{1}{2}(u + v) t",
-    description: "All SUVAT equations",
+    description:
+      "Find any variable in the uniformly accelerated motion equations (SUVAT)",
     variables: [
       { name: "Displacement", symbol: "s", unit: "m" },
       { name: "Initial Velocity", symbol: "u", unit: "m s⁻¹" },
@@ -283,10 +284,10 @@ export const equations: Equation[] = [
     name: "Area of Circle",
     category: "Geometry",
     latex: "A = \\pi r^2",
-    description: "Area of a circle given radius",
+    description: "Find either of the variables in the area of a circle equation",
     variables: [
-      { name: "A", symbol: "A", unit: "units²" },
-      { name: "r", symbol: "r", unit: "units" },
+      { name: "Area", symbol: "A", unit: "units²" },
+      { name: "Radius", symbol: "r", unit: "units" },
     ],
     solve: (values) => {
       const { A, r } = values;
@@ -559,120 +560,386 @@ export const equations: Equation[] = [
       return result;
     },
   },
-    {
-    id: 'photoelectric',
-    name: 'Photoelectric Effect',
-    category: 'Physics',
-    latex: 'hf=\\Phi+KE_{max}', // Escape backslashes for LaTeX
-    description: 'Find any of the variables in the photoelectric equation; units are respective',
+  {
+    id: "photoelectric",
+    name: "Photoelectric Effect",
+    category: "Physics",
+    latex: "hf=\\Phi+KE_{max}", // Escape backslashes for LaTeX
+    description:
+      "Find any of the variables in the photoelectric equation; units are respective",
     variables: [
-      { name: 'Frequency', symbol: 'f', unit: 'Hz' },
-      { name: 'Work Function', symbol: 'wf', unit: 'eV / J' },
-      { name: 'Max Kinetic Energy', symbol: 'ke', unit: 'eV / J' }
+      { name: "Frequency", symbol: "f", unit: "Hz" },
+      { name: "Work Function", symbol: "wf", unit: "eV / J" },
+      { name: "Max Kinetic Energy", symbol: "ke", unit: "eV / J" },
     ],
     solve: (values) => {
       const { f, wf, ke } = values;
       const result: Record<string, number> = {};
-      
+
       if (f !== undefined && wf === undefined && ke !== undefined) {
-        result.wf = (6.62607015e-34 * f) - ke;
+        result.wf = 6.62607015e-34 * f - ke;
       } else if (f === undefined && wf !== undefined && ke !== undefined) {
-        result.f = (wf + ke) / (6.62607015 ** -34);
+        result.f = (wf + ke) / 6.62607015 ** -34;
       } else if (f !== undefined && wf !== undefined && ke === undefined) {
-        result.ke = (f * (6.62607015 ** -34)) - wf;
+        result.ke = f * 6.62607015 ** -34 - wf;
       }
-      
+
       return result;
-      
     },
   },
-    {
-    id: 'internal-resistance',
-    name: 'Internal Resistance',
-    category: 'Electronics',
-    latex: '\\epsilon = I(R+r)\\:\\:|\\:\\:\\epsilon=V+Ir', // Escape backslashes for LaTeX
-    description: 'Find any variable in the standard internal resistance equation for cells',
+  {
+    id: "internal-resistance",
+    name: "Internal Resistance",
+    category: "Electronics",
+    latex: "\\epsilon = I(R+r)\\:\\:|\\:\\:\\epsilon=V+Ir", // Escape backslashes for LaTeX
+    description:
+      "Find any variable in the standard internal resistance equation for cells",
     variables: [
-      { name: 'Electromotive Force', symbol: 'emf', unit: 'V' },
-      { name: 'Current', symbol: 'I', unit: 'A' },
-      { name: 'Load Resistance', symbol: 'R', unit: 'Ω' },
-      { name: 'Internal Resistance', symbol: 'r', unit: 'Ω' }
+      { name: "Electromotive Force", symbol: "emf", unit: "V" },
+      { name: "Current", symbol: "I", unit: "A" },
+      { name: "Load Resistance", symbol: "R", unit: "Ω" },
+      { name: "Internal Resistance", symbol: "r", unit: "Ω" },
     ],
     solve: (values) => {
       const { emf, I, R, r } = values;
       const result: Record<string, number> = {};
-      
-      if (emf !== undefined && I === undefined && R !== undefined && r !== undefined) {
+
+      if (
+        emf !== undefined &&
+        I === undefined &&
+        R !== undefined &&
+        r !== undefined
+      ) {
         result.I = emf / (R + r);
-      } else if (emf === undefined && I !== undefined && R !== undefined && r !== undefined) {
+      } else if (
+        emf === undefined &&
+        I !== undefined &&
+        R !== undefined &&
+        r !== undefined
+      ) {
         result.emf = I * (R + r);
-      } else if (emf !== undefined && I !== undefined && R === undefined && r !== undefined) {
+      } else if (
+        emf !== undefined &&
+        I !== undefined &&
+        R === undefined &&
+        r !== undefined
+      ) {
         result.R = emf / (I - r);
-      } else if (emf !== undefined && I !== undefined && R !== undefined && r === undefined) {
+      } else if (
+        emf !== undefined &&
+        I !== undefined &&
+        R !== undefined &&
+        r === undefined
+      ) {
         result.r = emf / (I - R);
       }
-      
+
       return result;
     },
   },
-    {
-    id: 'standard-dev',
-    name: 'Standard Deviation',
-    category: 'Statistics',
-    latex: '\\sigma=\\sqrt{ \\frac{\\Sigma x^2}{n} -\\bar{x}^2}', // Escape backslashes for LaTeX
-    description: 'Find the any of the variables from the standard deviation formula',
+  {
+    id: "standard-dev",
+    name: "Standard Deviation",
+    category: "Statistics",
+    latex: "\\sigma=\\sqrt{ \\frac{\\Sigma x^2}{n} -\\bar{x}^2}", // Escape backslashes for LaTeX
+    description:
+      "Find the any of the variables from the standard deviation formula",
     variables: [
-      { name: 'Standard Deviation', symbol: 'sd', unit: 'units' },
-      { name: 'Sum of x²', symbol: 'sx', unit: '' },
-      { name: 'Population Size (n)', symbol: 'n', unit: '' },
-      { name: 'Mean', symbol: 'xbar', unit: 'units' }
+      { name: "Standard Deviation", symbol: "sd", unit: "units" },
+      { name: "Sum of x²", symbol: "sx", unit: "" },
+      { name: "Population Size (n)", symbol: "n", unit: "" },
+      { name: "Mean", symbol: "xbar", unit: "units" },
     ],
     solve: (values) => {
       const { sd, sx, n, xbar } = values;
       const result: Record<string, number> = {};
-      
-      if (sd !== undefined && sx === undefined && n !== undefined && xbar !== undefined) {
-        result.sx = ((sd ** 2) + (xbar ** 2)) * n;
-      } else if (sd === undefined && sx !== undefined && n !== undefined && xbar !== undefined) {
-        result.sd = Math.sqrt((sx / n) - (xbar ** 2));
-      } else if (sd !== undefined && sx !== undefined && n === undefined && xbar !== undefined) {
-        result.n = sx / ((sd ** 2) + (xbar ** 2));
-      } else if (sd !== undefined && sx !== undefined && n !== undefined && xbar === undefined) {
-        result.xbar = Math.sqrt((sx / n) - (sd ** 2));
+
+      if (
+        sd !== undefined &&
+        sx === undefined &&
+        n !== undefined &&
+        xbar !== undefined
+      ) {
+        result.sx = (sd ** 2 + xbar ** 2) * n;
+      } else if (
+        sd === undefined &&
+        sx !== undefined &&
+        n !== undefined &&
+        xbar !== undefined
+      ) {
+        result.sd = Math.sqrt(sx / n - xbar ** 2);
+      } else if (
+        sd !== undefined &&
+        sx !== undefined &&
+        n === undefined &&
+        xbar !== undefined
+      ) {
+        result.n = sx / (sd ** 2 + xbar ** 2);
+      } else if (
+        sd !== undefined &&
+        sx !== undefined &&
+        n !== undefined &&
+        xbar === undefined
+      ) {
+        result.xbar = Math.sqrt(sx / n - sd ** 2);
       }
-      
+
       return result;
     },
   },
-    {
-    id: 'snells-law',
+  {
+    id: "snells-law",
     name: `Snell's Law (Refractive Index)`,
-    category: 'Physics',
-    latex: 'n_1 \\sin\\theta_1 = n_2\\sin\\theta_2', // Escape backslashes for LaTeX
+    category: "Physics",
+    latex: "n_1 \\sin\\theta_1 = n_2\\sin\\theta_2", // Escape backslashes for LaTeX
     description: `Find the any of the variables from Snell's Law, comparing refractive indices; angle units are respective`,
     variables: [
-      { name: 'Refractive index 1', symbol: 'n1', unit: '' },
-      { name: 'Refective index 2', symbol: 'n2', unit: '' },
-      { name: 'Angle of Refraction 1', symbol: 'r1', unit: 'deg' },
-      { name: 'Angle of Refraction 2', symbol: 'r2', unit: 'deg' }
+      { name: "Refractive index 1", symbol: "n1", unit: "" },
+      { name: "Refective index 2", symbol: "n2", unit: "" },
+      { name: "Angle of Refraction 1", symbol: "r1", unit: "deg" },
+      { name: "Angle of Refraction 2", symbol: "r2", unit: "deg" },
     ],
     solve: (values) => {
       const { n1, n2, r1, r2 } = values;
       const result: Record<string, number> = {};
-      
-      if (n1 !== undefined && n2 === undefined && r1 !== undefined && r2 !== undefined) {
-        result.n2 = (n1 * Math.sin(r1 * (Math.PI / 180))) / Math.sin(r2 * (Math.PI / 180));
-      } else if (n1 === undefined && n2 !== undefined && r1 !== undefined && r2 !== undefined) {
-        result.n1 = (n2 * Math.sin(r2 * (Math.PI / 180))) / Math.sin(r1 * (Math.PI / 180));
-      } else if (n1 !== undefined && n2 !== undefined && r1 === undefined && r2 !== undefined) {
-        result.r1 = Math.asin(n1 * Math.sin(r2 * (Math.PI / 180)) / n2) * (180 / Math.PI);
-      } else if (n1 !== undefined && n2 !== undefined && r1 !== undefined && r2 === undefined) {
-        result.r2 = Math.asin(n2 * Math.sin(r1 * (Math.PI / 180)) / n1) * (180 / Math.PI);
+
+      if (
+        n1 !== undefined &&
+        n2 === undefined &&
+        r1 !== undefined &&
+        r2 !== undefined
+      ) {
+        result.n2 =
+          (n1 * Math.sin(r1 * (Math.PI / 180))) /
+          Math.sin(r2 * (Math.PI / 180));
+      } else if (
+        n1 === undefined &&
+        n2 !== undefined &&
+        r1 !== undefined &&
+        r2 !== undefined
+      ) {
+        result.n1 =
+          (n2 * Math.sin(r2 * (Math.PI / 180))) /
+          Math.sin(r1 * (Math.PI / 180));
+      } else if (
+        n1 !== undefined &&
+        n2 !== undefined &&
+        r1 === undefined &&
+        r2 !== undefined
+      ) {
+        result.r1 =
+          Math.asin((n1 * Math.sin(r2 * (Math.PI / 180))) / n2) *
+          (180 / Math.PI);
+      } else if (
+        n1 !== undefined &&
+        n2 !== undefined &&
+        r1 !== undefined &&
+        r2 === undefined
+      ) {
+        result.r2 =
+          Math.asin((n2 * Math.sin(r1 * (Math.PI / 180))) / n1) *
+          (180 / Math.PI);
       }
-      
+
       return result;
-      
     },
   },
-  
+  {
+    id: "gravity-mass-force",
+    name: "Force of Gravity",
+    category: "Physics",
+    latex: "F=-\\frac{Gm_{1}m_{2}}{r^2}", // Escape backslashes for LaTeX
+    description:
+      "Find any of the variables in the equation linking mass, radius and force.",
+    variables: [
+      { name: "Force", symbol: "F", unit: "N" },
+      { name: "Radius", symbol: "r", unit: "m" },
+      { name: "Mass 1 - Greatest", symbol: "M", unit: "kg" },
+      { name: "Mass 2 - Lowest", symbol: "m", unit: "kg" },
+    ],
+    solve: (values) => {
+      const { F, r, M, m } = values;
+      const result: Record<string, number> = {};
+
+      if (
+        F === undefined &&
+        r !== undefined &&
+        M !== undefined &&
+        m !== undefined
+      ) {
+        result.F = -((6.67 * 10 ** -11 * M * m) / r ** 2);
+      } else if (
+        F !== undefined &&
+        r === undefined &&
+        M !== undefined &&
+        m !== undefined
+      ) {
+        result.r = Math.sqrt((6.67 * 10 ** -11 * M * m) / F);
+      } else if (
+        F !== undefined &&
+        r !== undefined &&
+        M === undefined &&
+        m !== undefined
+      ) {
+        result.M = (F * r ** 2) / (6.67 * 10 ** -11 * m);
+      } else if (
+        F !== undefined &&
+        r !== undefined &&
+        M !== undefined &&
+        m === undefined
+      ) {
+        result.m = (F * r ** 2) / (6.67 * 10 ** -11 * M);
+      }
+
+      return result;
+    },
+  },
+  {
+    id: "gravity-mass-accel",
+    name: "Acceleration due to Gravity",
+    category: "Physics",
+    latex: "g=-\\frac{Gm_{1}}{r^2}", // Escape backslashes for LaTeX
+    description:
+      "Find any of the variables in the equation linking mass, radius and acceleration towards the centre of a sphere.",
+    variables: [
+      { name: "Acceleration due to Gravity", symbol: "g", unit: "ms⁻²" },
+      { name: "Radius", symbol: "r", unit: "m" },
+      { name: "Mass 1 - Greatest", symbol: "M", unit: "kg" },
+    ],
+    solve: (values) => {
+      const { r, M, g } = values;
+      const result: Record<string, number> = {};
+
+      if (g === undefined && r !== undefined && M !== undefined) {
+        result.g = -((6.67 * 10 ** -11 * M) / r ** 2);
+      } else if (g !== undefined && r === undefined && M !== undefined) {
+        result.r = Math.sqrt((6.67 * 10 ** -11 * M) / g);
+      } else if (g !== undefined && r !== undefined && M === undefined) {
+        result.M = (g * r ** 2) / (6.67 * 10 ** -11);
+      }
+
+      return result;
+    },
+  },
+  {
+    id: "wave-velocity",
+    name: "Velocity of a Wave",
+    category: "Physics",
+    latex: "v=f\\lambda", // Escape backslashes for LaTeX
+    description:
+      "Find any of the variables in the standard wave velocity equation linking wavelength, frequency and speed.",
+    variables: [
+      { name: "Velocity", symbol: "v", unit: "ms⁻¹" },
+      { name: "Wavelength", symbol: "lbd", unit: "m" },
+      { name: "Frequency", symbol: "f", unit: "Hz" },
+    ],
+    solve: (values) => {
+      const { v, lbd, f } = values;
+      const result: Record<string, number> = {};
+
+      if (v === undefined && lbd !== undefined && f !== undefined) {
+        result.v = f * lbd;
+      } else if (v !== undefined && lbd === undefined && f !== undefined) {
+        result.lbd = v / f;
+      } else if (v !== undefined && lbd !== undefined && f === undefined) {
+        result.f = v / lbd;
+      }
+
+      return result;
+    },
+  },
+  {
+    id: "sine-rule",
+    name: "Sine Rule",
+    category: "Geometry",
+    latex:
+      "\\frac{a}{\\sin A}=\\frac{b}{\\sin B}\\:\\:|\\:\\: \\frac{\\sin A}{a}=\\frac{\\sin B}{b}", // Escape backslashes for LaTeX
+    description:
+      "Find any of the variables in the sine rule equation. If missing angle is obtuse, minus the angle shown from 180.",
+    variables: [
+      { name: "Side A", symbol: "a", unit: "units" },
+      { name: "Side B", symbol: "b", unit: "units" },
+      { name: "Angle A", symbol: "A", unit: "deg" },
+      { name: "Angle B", symbol: "B", unit: "deg" },
+    ],
+    solve: (values) => {
+      const { a, b, A, B } = values;
+      const result: Record<string, number> = {};
+
+      if (
+        a === undefined &&
+        b !== undefined &&
+        A !== undefined &&
+        B !== undefined
+      ) {
+        result.a =
+          Math.sin((A * Math.PI) / 180) * (b / Math.sin((B * Math.PI) / 180));
+      } else if (
+        a !== undefined &&
+        b === undefined &&
+        A !== undefined &&
+        B !== undefined
+      ) {
+        result.b =
+          Math.sin((B * Math.PI) / 180) * (a / Math.sin((A * Math.PI) / 180));
+      } else if (
+        a !== undefined &&
+        b !== undefined &&
+        A === undefined &&
+        B !== undefined
+      ) {
+        result.A =
+          Math.asin((a * Math.sin((B * Math.PI) / 180)) / b) * (180 / Math.PI);
+      } else if (
+        a !== undefined &&
+        b !== undefined &&
+        A !== undefined &&
+        B === undefined
+      ) {
+        result.B =
+          Math.asin((b * Math.sin((A * Math.PI) / 180)) / a) * (180 / Math.PI);
+      }
+
+      return result;
+    },
+  },
+  {
+    id: "cosine-rule",
+    name: "Cosine Rule",
+    category: "Geometry",
+    latex:
+      "a^2=b^2+c^2-2bc\\cos A\\:\\:|\\:\\:\\ A=cos^{-1}(\\frac{b^2+c^2-a^2}{2bc})", // Escape backslashes for LaTeX
+    description: "Find side or angle in the cosine rule equation",
+    variables: [
+      { name: "Side A", symbol: "a", unit: "units" },
+      { name: "Side B", symbol: "b", unit: "units" },
+      { name: "Side C", symbol: "c", unit: "units" },
+      { name: "Angle A", symbol: "A", unit: "deg" },
+    ],
+    solve: (values) => {
+      const { a, b, c, A } = values;
+      const result: Record<string, number> = {};
+
+      if (
+        a === undefined &&
+        b !== undefined &&
+        c !== undefined &&
+        A !== undefined
+      ) {
+        result.a = Math.sqrt(
+          b ** 2 + c ** 2 - 2 * b * c * Math.cos((A * Math.PI) / 180)
+        );
+      } else if (
+        a !== undefined &&
+        b !== undefined &&
+        c !== undefined &&
+        A === undefined
+      ) {
+        result.A =
+          Math.acos((b ** 2 + c ** 2 - a ** 2) / (2 * b * c)) * (180 / Math.PI);
+      }
+
+      return result;
+    },
+  },
 ];

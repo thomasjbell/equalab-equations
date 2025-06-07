@@ -1,3 +1,4 @@
+// lib/mathUtils.ts
 export function formatNumber(num: number, decimals: number = 10): string {
   if (Number.isInteger(num)) {
     return num.toString();

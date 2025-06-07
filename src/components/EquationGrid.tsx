@@ -8,6 +8,7 @@ import SortDropdown from "./SortDropdown";
 import { equations } from "../lib/equations";
 import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
+import { Info } from "lucide-react";
 
 export default function EquationGrid() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,23 +66,28 @@ export default function EquationGrid() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-4xl font-bold text-cyan-950 text-center mb-4">Equation Library</h2>
+        <h2 className="text-4xl font-bold text-cyan-950 text-center mb-4 dark:text-cyan-50">
+          Equation Library
+        </h2>
+        <div className="flex justify-end"></div>
         <motion.div
-            className="bg-gradient-to-r from-cyan-800 to-cyan-500 h-0.5 w-1/3 md:w-1/4 mx-auto rounded-full"
-            initial={{ scaleX: 0 }}
-            whileInView={{ scaleX: 1 }}
-            transition={{
-              duration: 0.6, // Was 0.8
-              ease: "easeInOut",
-              delay: 0.1 // Was 0.2
-            }}
-            viewport={{ once: true }}
-          />
+          className="bg-gradient-to-r from-cyan-800 to-cyan-500 h-0.5 w-1/3 md:w-1/4 mx-auto rounded-full"
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: 1 }}
+          transition={{
+            duration: 0.6, // Was 0.8
+            ease: "easeInOut",
+            delay: 0.1, // Was 0.2
+          }}
+          viewport={{ once: true }}
+        />
       </div>
+
       {/* Controls */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-row flex-wrap items-center gap-4">
           <div className="flex-1 min-w-0">
+            {/* Assuming SearchBar and SortDropdown also handle dark mode internally or via props */}
             <SearchBar
               value={searchTerm}
               onChange={setSearchTerm}
@@ -99,47 +105,66 @@ export default function EquationGrid() {
             </div>
             <button
               onClick={toggleDisplayMode}
-              className="appearance-none bg-white border border-gray-300 rounded-xl px-4 py-3 outline-none transition-all shadow-sm"
+              className="appearance-none bg-white border border-gray-300 rounded-xl px-4 py-3 outline-none transition-all shadow-sm
+              dark:bg-gray-700 dark:border-gray-600 dark:shadow-none"
             >
               {displayMode === "list" ? (
-                <Squares2X2Icon color="#164e63" className="h-6 w-6" />
+                <Squares2X2Icon
+                  
+                  className="h-6 w-6 text-cyan-900 dark:text-cyan-50"
+                />
               ) : (
-                <ListBulletIcon color="#164e63" className="h-6 w-6" />
+                <ListBulletIcon
+                  
+                  className="h-6 w-6 text-cyan-900 dark:text-cyan-50"
+                />
               )}
             </button>
           </div>
         </div>
 
         {/* Tag List */}
-        <div className="overflow-x-auto whitespace-nowrap">
-          <button
-            className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium  ${
-              selectedTag === null
-                ? "bg-cyan-600 text-white"
-                : "bg-slate-200 text-cyan-900 hover:bg-gray-300"
-            }`}
-            onClick={() => handleTagSelect(null)}
-          >
-            All
-          </button>
-          {uniqueCategories.map((tag) => (
+        <div className="flow-root">
+          <div className="overflow-x-auto whitespace-nowrap float-left">
             <button
-              key={tag}
-              className={`inline-flex items-center rounded-full px-3 py-1 ml-2 text-sm font-medium  ${
-                selectedTag === tag
-                  ? "bg-cyan-600 text-white"
-                  : "bg-slate-200 text-cyan-900 hover:bg-gray-300"
+              className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium  ${
+                selectedTag === null
+                  ? "bg-cyan-600 text-cyan-50 hover:bg-cyan-700 dark:bg-cyan-700 dark:hover:bg-cyan-600"
+                  : "bg-slate-200 text-cyan-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-cyan-50 dark:hover:bg-gray-600"
               }`}
-              onClick={() => handleTagSelect(tag)}
+              onClick={() => handleTagSelect(null)}
             >
-              {tag}
+              All
             </button>
-          ))}
+            {uniqueCategories.map((tag) => (
+              <button
+                key={tag}
+                className={`inline-flex items-center rounded-full px-3 py-1 ml-2 text-sm font-medium  ${
+                  selectedTag === tag
+                    ? "bg-cyan-600 text-cyan-50 hover:bg-cyan-700 dark:bg-cyan-700 dark:hover:bg-cyan-600"
+                    : "bg-slate-200 text-cyan-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-cyan-50 dark:hover:bg-gray-600"
+                }`}
+                onClick={() => handleTagSelect(tag)}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+          <div className="float-right">
+            <a
+              className=" bg-cyan-600 hover:bg-cyan-700 text-cyan-50 rounded-full px-4 py-1 transition-color shadow-sm duration-100 flex gap-2 items-center
+              dark:bg-cyan-700 dark:hover:bg-cyan-600 dark:text-cyan-100 dark:shadow-none"
+              href="/help"
+            >
+              <Info color="currentColor" className="h-4 w-4" />
+              Help
+            </a>
+          </div>
         </div>
       </div>
 
       {/* Results Count */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-gray-600 dark:text-gray-400">
         {filteredAndSortedEquations.length} equation
         {filteredAndSortedEquations.length !== 1 ? "s" : ""} found
         {selectedTag && ` in category "${selectedTag}"`}
@@ -166,7 +191,7 @@ export default function EquationGrid() {
 
       {filteredAndSortedEquations.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">
+          <p className="text-gray-500 text-lg dark:text-gray-400">
             No equations found matching your search
             {selectedTag && ` in category "${selectedTag}"`}.
           </p>

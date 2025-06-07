@@ -204,6 +204,7 @@ ${indentedSolveBody}
             {/* Section 2: Variables */}
             <section>
               <h2 className="text-xl font-semibold text-slate-800 border-b pb-2 mb-6">Variables 🔬</h2>
+              <p className='text-sm text-cyan-700 mb-4'>Useful Symbols: <code> ⁻ ¹ ² ³ ₜ ₁ ₂ ₃</code></p>
               {formData.variables.length > 0 && (
                 <div className="mb-6 space-y-3">
                   <h3 className="text-md font-medium text-slate-700">Added Variables:</h3>
