@@ -109,57 +109,40 @@ export default function EquationGrid() {
               dark:bg-gray-700 dark:border-gray-600 dark:shadow-none"
             >
               {displayMode === "list" ? (
-                <Squares2X2Icon
-                  
-                  className="h-6 w-6 text-cyan-900 dark:text-cyan-50"
-                />
+                <Squares2X2Icon className="h-6 w-6 text-cyan-900 dark:text-cyan-50" />
               ) : (
-                <ListBulletIcon
-                  
-                  className="h-6 w-6 text-cyan-900 dark:text-cyan-50"
-                />
+                <ListBulletIcon className="h-6 w-6 text-cyan-900 dark:text-cyan-50" />
               )}
             </button>
           </div>
         </div>
 
         {/* Tag List */}
-        <div className="flow-root">
-          <div className="overflow-x-auto whitespace-nowrap float-left">
+
+        <div className="overflow-x-auto whitespace-nowrap">
+          <button
+            className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium  ${
+              selectedTag === null
+                ? "bg-cyan-600 text-cyan-50 hover:bg-cyan-700 dark:bg-cyan-700 dark:hover:bg-cyan-600"
+                : "bg-slate-200 text-cyan-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-cyan-50 dark:hover:bg-gray-600"
+            }`}
+            onClick={() => handleTagSelect(null)}
+          >
+            All
+          </button>
+          {uniqueCategories.map((tag) => (
             <button
-              className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium  ${
-                selectedTag === null
+              key={tag}
+              className={`inline-flex items-center rounded-full px-3 py-1 ml-2 text-sm font-medium  ${
+                selectedTag === tag
                   ? "bg-cyan-600 text-cyan-50 hover:bg-cyan-700 dark:bg-cyan-700 dark:hover:bg-cyan-600"
                   : "bg-slate-200 text-cyan-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-cyan-50 dark:hover:bg-gray-600"
               }`}
-              onClick={() => handleTagSelect(null)}
+              onClick={() => handleTagSelect(tag)}
             >
-              All
+              {tag}
             </button>
-            {uniqueCategories.map((tag) => (
-              <button
-                key={tag}
-                className={`inline-flex items-center rounded-full px-3 py-1 ml-2 text-sm font-medium  ${
-                  selectedTag === tag
-                    ? "bg-cyan-600 text-cyan-50 hover:bg-cyan-700 dark:bg-cyan-700 dark:hover:bg-cyan-600"
-                    : "bg-slate-200 text-cyan-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-cyan-50 dark:hover:bg-gray-600"
-                }`}
-                onClick={() => handleTagSelect(tag)}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-          <div className="float-right">
-            <a
-              className=" bg-cyan-600 hover:bg-cyan-700 text-cyan-50 rounded-full px-4 py-1 transition-color shadow-sm duration-100 flex gap-2 items-center
-              dark:bg-cyan-700 dark:hover:bg-cyan-600 dark:text-cyan-100 dark:shadow-none"
-              href="/help"
-            >
-              <Info color="currentColor" className="h-4 w-4" />
-              Help
-            </a>
-          </div>
+          ))}
         </div>
       </div>
 

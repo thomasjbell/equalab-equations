@@ -306,11 +306,11 @@ export const equations: Equation[] = [
     latex: "A = P(1 + \\frac{r}{n})^{nt}",
     description: "Compound interest calculation",
     variables: [
-      { name: "A", symbol: "A", unit: "$" },
-      { name: "P", symbol: "P", unit: "$" },
-      { name: "r", symbol: "r", unit: "" },
-      { name: "n", symbol: "n", unit: "" },
-      { name: "t", symbol: "t", unit: "years" },
+      { name: "Final Amount", symbol: "A", unit: "$" },
+      { name: "Principle Balance", symbol: "P", unit: "$" },
+      { name: "Interest Rate", symbol: "r", unit: "" },
+      { name: "Number of Compounding Periods", symbol: "n", unit: "" },
+      { name: "Number of Time Periods", symbol: "t", unit: "years" },
     ],
     solve: (values) => {
       const { A, P, r, n, t } = values;
