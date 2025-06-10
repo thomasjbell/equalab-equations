@@ -68,9 +68,7 @@ export default function EquationCard({
     <div
       className={`bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-sm transition-all duration-100 hover:border-cyan-400 p-6
       dark:bg-gray-800 dark:border-gray-700 dark:hover:border-cyan-600 dark:shadow-none ${
-        isExpanded
-          ? "shadow-lg border-blue-400 dark:border-blue-600"
-          : ""
+        isExpanded ? "shadow-lg border-blue-400 dark:border-blue-600" : ""
       }`}
     >
       {/* Card Header */}
@@ -137,10 +135,10 @@ export default function EquationCard({
                   disabled={isCalculatedResult(variable.symbol)}
                   className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-cyan-600 focus:border-transparent outline-none transition-all
                     dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-cyan-500 ${
-                    isCalculatedResult(variable.symbol)
-                      ? "bg-green-50 border-green-300 text-green-800 font-medium dark:bg-green-900 dark:border-green-700 dark:text-green-300"
-                      : ""
-                  }`}
+                      isCalculatedResult(variable.symbol)
+                        ? "bg-green-50 border-green-300 text-green-800 font-medium dark:bg-green-900 dark:border-green-700 dark:text-green-300"
+                        : ""
+                    }`}
                   placeholder={`Enter ${variable.name.toLowerCase()}`}
                 />
                 {isCalculatedResult(variable.symbol) && (

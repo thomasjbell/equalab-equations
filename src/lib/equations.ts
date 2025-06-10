@@ -581,7 +581,7 @@ export const equations: Equation[] = [
       } else if (f === undefined && wf !== undefined && ke !== undefined) {
         result.f = (wf + ke) / 6.62607015 ** -34;
       } else if (f !== undefined && wf !== undefined && ke === undefined) {
-        result.ke = f * 6.62607015 ** -34 - wf;
+        result.ke = f * 6.62607015e-34 - wf;
       }
 
       return result;
