@@ -46,7 +46,7 @@ export default function Navbar() {
               className="flex items-center space-x-1 text-cyan-900 hover:text-cyan-600 transition-colors font-medium
               dark:text-cyan-100 dark:hover:text-cyan-300"
             >
-              <BookOpen className="w-4 h-4 dark:text-cyan-100" />
+              <BookOpen className="w-4 h-4 color-inherit" />
               <span>Library</span>
             </a>
             <a
@@ -54,7 +54,7 @@ export default function Navbar() {
               className="flex items-center space-x-1 text-cyan-900 hover:text-cyan-600 transition-colors font-medium
               dark:text-cyan-100 dark:hover:text-cyan-300"
             >
-              <PlusSquare className="w-4 h-4 dark:text-cyan-100" />
+              <PlusSquare className="w-4 h-4 color-inherit" />
               <span>Add Equation</span>
             </a>
             <a
@@ -62,7 +62,7 @@ export default function Navbar() {
               className="flex items-center space-x-1 text-cyan-900 hover:text-cyan-600 transition-colors font-medium
               dark:text-cyan-100 dark:hover:text-cyan-300"
             >
-              <Settings className="w-4 h-4 dark:text-cyan-100" />
+              <Settings className="w-4 h-4 color-inherit" />
               <span>Settings</span>
             </a>
           </div>

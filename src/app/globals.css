@@ -12,10 +12,40 @@
   margin: 0.5em 0;
 }
 
-body {
-  font-family: 'Questrial', sans-serif;
+/* Dark mode KaTeX styling */
+.dark .katex {
+  color: #a7f3d0 !important; /* cyan-200 */
 }
 
+.dark .katex .mord,
+.dark .katex .mop,
+.dark .katex .mbin,
+.dark .katex .mrel,
+.dark .katex .mopen,
+.dark .katex .mclose,
+.dark .katex .mpunct {
+  color: #a7f3d0 !important; /* cyan-200 */
+}
+
+.dark .katex .mfrac .frac-line {
+  border-bottom-color: #a7f3d0 !important; /* cyan-200 */
+}
+
+.dark .katex .sqrt .sqrt-line {
+  border-top-color: #a7f3d0 !important; /* cyan-200 */
+}
+
+body {
+  font-family: 'Questrial', sans-serif;
+  color: #083344;
+
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color: #cffafe;
+  } 
+}
 /* Hide number input spinners/incrementors */
 /* Chrome, Safari, Edge, Opera */
 input[type="number"]::-webkit-outer-spin-button,
@@ -28,4 +58,3 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
-

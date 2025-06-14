@@ -1,16 +1,14 @@
-// components/EquationGrid.tsx
 "use client";
 
 import { useState, useMemo } from "react";
-import EquationCard from "./EquationCard";
+import EnhancedEquationCard from "./EnhancedEquationCard";
 import SearchBar from "./SearchBar";
 import SortDropdown from "./SortDropdown";
-import { equations } from "../lib/equations";
+import { symbolicEquations } from "../lib/symbolicEquationsData";
 import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
-import { Info } from "lucide-react";
 
-export default function EquationGrid() {
+export default function EnhancedEquationGrid() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -18,11 +16,11 @@ export default function EquationGrid() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   const uniqueCategories = useMemo(() => {
-    return [...new Set(equations.map((eq) => eq.category))];
-  }, [equations]);
+    return [...new Set(symbolicEquations.map((eq) => eq.category))];
+  }, []);
 
   const filteredAndSortedEquations = useMemo(() => {
-    let filtered = equations.filter((equation) => {
+    let filtered = symbolicEquations.filter((equation) => {
       const searchMatch =
         equation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         equation.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -66,18 +64,26 @@ export default function EquationGrid() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-4xl font-bold text-cyan-950 text-center mb-4 dark:text-cyan-50">
-          Equation Library
-        </h2>
-        <div className="flex justify-end"></div>
+        <h1 className="text-5xl font-bold text-cyan-950 text-center mb-4 dark:text-cyan-50">
+          Library
+        </h1>
+        <p className="text-center text-gray-600 dark:text-gray-400 mb-2 text-lg">
+          Input fractions, surds, decimals → Get exact symbolic results
+        </p>
+        <p className="text-center text-gray-500 dark:text-gray-500 mb-6 text-sm">
+          Try inputs like: <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">1/2</code>, 
+          <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded ml-2">sqrt(2)</code>, 
+          <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded ml-2">3*pi</code>, 
+          <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded ml-2">2 1/4</code>
+        </p>
         <motion.div
           className="bg-gradient-to-r from-cyan-800 to-cyan-500 h-0.5 w-1/3 md:w-1/4 mx-auto rounded-full"
           initial={{ scaleX: 0 }}
           whileInView={{ scaleX: 1 }}
           transition={{
-            duration: 0.6, // Was 0.8
+            duration: 0.6,
             ease: "easeInOut",
-            delay: 0.1, // Was 0.2
+            delay: 0.1,
           }}
           viewport={{ once: true }}
         />
@@ -87,18 +93,15 @@ export default function EquationGrid() {
       <div className="flex flex-col gap-4">
         <div className="flex flex-row flex-wrap items-center gap-4">
           <div className="flex-1 min-w-0">
-            {/* Assuming SearchBar and SortDropdown also handle dark mode internally or via props */}
             <SearchBar
               value={searchTerm}
               onChange={setSearchTerm}
               placeholder="Search equations, categories, or descriptions..."
             />
           </div>
-          {/* Mobile Version - Sort */}
           <div className="md:hidden sm:w-auto">
             <SortDropdown value={sortBy} onChange={setSortBy} />
           </div>
-          {/* Desktop Version - Sort and Display Mode */}
           <div className="hidden md:flex items-center gap-4">
             <div className="sm:w-auto">
               <SortDropdown value={sortBy} onChange={setSortBy} />
@@ -118,7 +121,6 @@ export default function EquationGrid() {
         </div>
 
         {/* Tag List */}
-
         <div className="overflow-x-auto whitespace-nowrap">
           <button
             className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium  ${
@@ -163,7 +165,7 @@ export default function EquationGrid() {
       >
         {filteredAndSortedEquations.map((equation) => (
           <div key={equation.id}>
-            <EquationCard
+            <EnhancedEquationCard
               equation={equation}
               isExpanded={expandedCards.has(equation.id)}
               onToggle={() => handleCardToggle(equation.id)}

@@ -1,68 +1,30 @@
-// pages/equation-generator.tsx
 "use client";
 
 import Head from 'next/head';
 import React, { useState } from 'react';
+import { EnhancedEquationConfig } from '@/types/enhancedEquation';
 
-// Define the types for clarity within this component
 interface Variable {
-  name: string; // For display, e.g., "x₁" or "Voltage"
-  symbol: string; // For code, e.g., "x_1" or "V" (used in solve function)
+  name: string;
+  symbol: string;
   unit: string;
 }
 
-interface EquationFormData {
-  id: string;
-  name: string;
-  category: string;
-  latex: string;
-  description: string;
-  variables: Variable[];
-  solveFunctionBody: string;
+interface LinearRelationship {
+  variable: string;
+  formula: string;
 }
 
-const initialSolveBodyPlaceholder = `// Access input variables from the 'values' object using their 'symbol', e.g., values.mass, values.acceleration.
-// Ensure all variable symbols used here are defined in the 'Variables' section above.
-// The returned object keys must also match 'symbol's defined in the 'Variables' section.
-
-// Example for an equation like c = a + b:
-// const { a, b } = values; // 'a' and 'b' must be symbols of variables
-// const result: Record<string, number> = {};
-// if (a !== undefined && b !== undefined) {
-//   result.c = a + b; // 'c' must be a symbol of a variable
-// }
-// return result;
-
-// Example for solving for different variables (Ohm's Law V=IR):
-// const { V, I, R } = values; // V, I, R are variable symbols
-// const result: Record<string, number> = {};
-// if (I !== undefined && R !== undefined && V === undefined) result.V = I * R;
-// else if (V !== undefined && R !== undefined && I === undefined) result.I = V / R;
-// else if (V !== undefined && I !== undefined && R === undefined) result.R = V / I;
-// return result;
-
-// For equations with a single set of results (like quadratic formula for x1, x2):
-// const { a, b, c } = values;
-// if (a !== undefined && b !== undefined && c !== undefined) {
-//   const discriminant = b * b - 4 * a * c;
-//   if (discriminant >= 0) {
-//     const x1 = (-b + Math.sqrt(discriminant)) / (2 * a);
-//     const x2 = (-b - Math.sqrt(discriminant)) / (2 * a);
-//     return { x_1: x1, x_2: x2 }; // x_1, x_2 must be symbols of variables
-//   }
-// }
-// return {}; // Return empty object if inputs are insufficient or no solution
-`;
-
 const EquationGeneratorPage: React.FC = () => {
-  const [formData, setFormData] = useState<EquationFormData>({
+  const [formData, setFormData] = useState<Partial<EnhancedEquationConfig>>({
     id: '',
     name: '',
     category: '',
     latex: '',
     description: '',
     variables: [],
-    solveFunctionBody: initialSolveBodyPlaceholder,
+    type: 'linear',
+    config: {},
   });
 
   const [currentVariable, setCurrentVariable] = useState<Variable>({
@@ -71,13 +33,39 @@ const EquationGeneratorPage: React.FC = () => {
     unit: '',
   });
 
+  const [linearRelationships, setLinearRelationships] = useState<LinearRelationship[]>([]);
+  const [currentRelationship, setCurrentRelationship] = useState<LinearRelationship>({
+    variable: '',
+    formula: '',
+  });
+
   const [generatedCode, setGeneratedCode] = useState<string>('');
 
+  const equationTypes = [
+    { value: 'linear', label: 'Linear (e.g., V=IR, solve for any variable)' },
+    { value: 'quadratic', label: 'Quadratic Formula' },
+    { value: 'geometric', label: 'Geometric Formula' },
+    { value: 'physics', label: 'Physics Formula' },
+    { value: 'symbolic', label: 'Symbolic (auto-solve from equation)' },
+    { value: 'custom', label: 'Custom Logic (manual)' },
+  ];
+
+  const geometricFormulas = [
+    { value: 'circle_area', label: 'Circle Area (A = πr²)' },
+    { value: 'sphere_volume', label: 'Sphere Volume (V = 4/3πr³)' },
+    { value: 'pythagoras', label: 'Pythagorean Theorem (c² = a² + b²)' },
+  ];
+
   const handleFormInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'type') {
+      setFormData(prev => ({ ...prev, [name]: value, config: {} }));
+      setLinearRelationships([]);
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleVariableInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,16 +75,15 @@ const EquationGeneratorPage: React.FC = () => {
 
   const handleAddVariable = () => {
     if (currentVariable.name.trim() && currentVariable.symbol.trim()) {
-      // Basic validation for symbol (simple JS identifier check)
       if (!/^[a-zA-Z_$][0-9a-zA-Z_$]*$/.test(currentVariable.symbol.trim())) {
         alert('Variable Symbol must be a valid JavaScript identifier (e.g., myVar, x_1, R).');
         return;
       }
       setFormData(prev => ({
         ...prev,
-        variables: [...prev.variables, { ...currentVariable, symbol: currentVariable.symbol.trim() }],
+        variables: [...(prev.variables || []), { ...currentVariable, symbol: currentVariable.symbol.trim() }],
       }));
-      setCurrentVariable({ name: '', symbol: '', unit: '' }); // Reset for next variable
+      setCurrentVariable({ name: '', symbol: '', unit: '' });
     } else {
       alert('Variable Name and Symbol are required.');
     }
@@ -105,47 +92,103 @@ const EquationGeneratorPage: React.FC = () => {
   const handleRemoveVariable = (indexToRemove: number) => {
     setFormData(prev => ({
       ...prev,
-      variables: prev.variables.filter((_, index) => index !== indexToRemove),
+      variables: (prev.variables || []).filter((_, index) => index !== indexToRemove),
+    }));
+  };
+
+  const handleRelationshipChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setCurrentRelationship(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddRelationship = () => {
+    if (currentRelationship.variable && currentRelationship.formula) {
+      setLinearRelationships(prev => [...prev, { ...currentRelationship }]);
+      setCurrentRelationship({ variable: '', formula: '' });
+    }
+  };
+
+  const handleRemoveRelationship = (indexToRemove: number) => {
+    setLinearRelationships(prev => prev.filter((_, index) => index !== indexToRemove));
+  };
+
+  const handleConfigInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      config: { ...prev.config, [name]: value },
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.id.trim() || !formData.name.trim() || !formData.category.trim() || !formData.latex.trim()) {
-        alert("ID, Name, Category, and LaTeX are required fields.");
-        return;
+    if (!formData.id?.trim() || !formData.name?.trim() || !formData.category?.trim() || !formData.latex?.trim()) {
+      alert("ID, Name, Category, and LaTeX are required fields.");
+      return;
     }
 
-    const variablesString = formData.variables.map(v =>
+    // Build config based on equation type
+    let config: any = {};
+    
+    switch (formData.type) {
+      case 'linear':
+      case 'physics':
+        if (linearRelationships.length === 0) {
+          alert("Please add at least one relationship for linear/physics equations.");
+          return;
+        }
+        config = {
+          relationships: linearRelationships.reduce((acc, rel) => {
+            acc[rel.variable] = rel.formula;
+            return acc;
+          }, {} as Record<string, string>)
+        };
+        break;
+      
+      case 'geometric':
+        config = { formula: formData.config?.formula };
+        break;
+      
+      case 'symbolic':
+        config = { equation: formData.config?.equation };
+        break;
+      
+      case 'quadratic':
+        config = {};
+        break;
+      
+      case 'custom':
+        config = { customSolver: formData.config?.customSolver };
+        break;
+    }
+
+    const variablesString = (formData.variables || []).map(v =>
       `      { name: '${v.name}', symbol: '${v.symbol}', unit: '${v.unit}' }`
     ).join(',\n');
 
-    const indentedSolveBody = formData.solveFunctionBody
-      .split('\n')
-      .map(line => `      ${line}`) // 6 spaces indentation for the body
-      .join('\n');
+    const configString = JSON.stringify(config, null, 6).replace(/^/gm, '    ');
 
     const code = `  {
     id: '${formData.id.trim()}',
     name: '${formData.name.trim()}',
     category: '${formData.category.trim()}',
-    latex: '${formData.latex.trim().replace(/\\/g, '\\\\')}', // Escape backslashes for LaTeX
-    description: '${formData.description.trim()}',
-    variables: [\n${variablesString}${formData.variables.length > 0 ? '\n    ' : ''}],
-    solve: (values) => {
-${indentedSolveBody}
-    },
+    latex: '${formData.latex.trim().replace(/\\/g, '\\\\')}',
+    description: '${formData.description?.trim() || ''}',
+    type: '${formData.type}',
+    variables: [\n${variablesString}${formData.variables?.length ? '\n    ' : ''}],
+    config: ${configString},
   },`;
+    
     setGeneratedCode(code);
   };
 
   const handleCopyToClipboard = () => {
     if (generatedCode) {
       navigator.clipboard.writeText(generatedCode)
-        .then(() => alert('Code copied to clipboard! Add it to your `equations` array.'))
+        .then(() => alert('Code copied to clipboard! Add it to your enhancedEquationsData.ts file.'))
         .catch(err => {
-            console.error('Failed to copy code: ', err);
-            alert('Failed to copy code. See console for details.');
+          console.error('Failed to copy code: ', err);
+          alert('Failed to copy code. See console for details.');
         });
     }
   };
@@ -155,46 +198,52 @@ ${indentedSolveBody}
   const buttonClass = "px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500";
   const secondaryButtonClass = "px-3 py-1.5 bg-slate-200 text-slate-700 text-xs font-medium rounded-md hover:bg-slate-300 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-slate-400";
 
-
   return (
     <>
       <Head>
-        <title>Equation Syntax Generator</title>
+        <title>Enhanced Equation Generator</title>
       </Head>
       <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <header className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Equation Syntax Generator ⚙️</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Enhanced Equation Generator 🚀</h1>
             <p className="mt-2 text-sm text-slate-600">
-              Use this form to generate the TypeScript object syntax for your equations.
+              Generate equations with automatic solving using templates - no manual coding required!
             </p>
           </header>
 
           <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 shadow-xl rounded-lg">
-            {/* Section 1: Basic Equation Details */}
+            {/* Section 1: Basic Details */}
             <section>
               <h2 className="text-xl font-semibold text-slate-800 border-b pb-2 mb-6">Equation Details</h2>
               <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="id" className={labelClass}>ID (kebab-case, unique) <span className="text-red-500">*</span></label>
-                  <input type="text" name="id" id="id" value={formData.id} onChange={handleFormInputChange} className={inputClass} placeholder="e.g., quadratic-formula" required />
+                  <input type="text" name="id" id="id" value={formData.id || ''} onChange={handleFormInputChange} className={inputClass} placeholder="e.g., new-physics-law" required />
                 </div>
                 <div>
                   <label htmlFor="name" className={labelClass}>Name <span className="text-red-500">*</span></label>
-                  <input type="text" name="name" id="name" value={formData.name} onChange={handleFormInputChange} className={inputClass} placeholder="e.g., Quadratic Formula" required />
+                  <input type="text" name="name" id="name" value={formData.name || ''} onChange={handleFormInputChange} className={inputClass} placeholder="e.g., New Physics Law" required />
                 </div>
                 <div>
                   <label htmlFor="category" className={labelClass}>Category <span className="text-red-500">*</span></label>
-                  <input type="text" name="category" id="category" value={formData.category} onChange={handleFormInputChange} className={inputClass} placeholder="e.g., Algebra" required />
+                  <input type="text" name="category" id="category" value={formData.category || ''} onChange={handleFormInputChange} className={inputClass} placeholder="e.g., Physics" required />
                 </div>
                 <div>
+                  <label htmlFor="type" className={labelClass}>Equation Type <span className="text-red-500">*</span></label>
+                  <select name="type" id="type" value={formData.type || 'linear'} onChange={handleFormInputChange} className={inputClass} required>
+                    {equationTypes.map(type => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="sm:col-span-2">
                   <label htmlFor="latex" className={labelClass}>LaTeX String <span className="text-red-500">*</span></label>
-                  <input type="text" name="latex" id="latex" value={formData.latex} onChange={handleFormInputChange} className={inputClass} placeholder="e.g., x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}" required />
-                  <p className="mt-1 text-xs text-slate-500">Enter LaTeX as you would normally, e.g., {' \sqrt{x} '}. It will be correctly escaped in the output.</p>
+                  <input type="text" name="latex" id="latex" value={formData.latex || ''} onChange={handleFormInputChange} className={inputClass} placeholder="e.g., F = ma" required />
                 </div>
                 <div className="sm:col-span-2">
                   <label htmlFor="description" className={labelClass}>Description</label>
-                  <textarea name="description" id="description" value={formData.description} onChange={handleFormInputChange} rows={3} className={inputClass} placeholder="e.g., Solves quadratic equations of the form ax² + bx + c = 0"></textarea>
+                  <textarea name="description" id="description" value={formData.description || ''} onChange={handleFormInputChange} rows={3} className={inputClass} placeholder="Describe what this equation does"></textarea>
                 </div>
               </div>
             </section>
@@ -203,18 +252,15 @@ ${indentedSolveBody}
 
             {/* Section 2: Variables */}
             <section>
-              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2 mb-6">Variables 🔬</h2>
-              <p className='text-sm text-cyan-700 mb-4'>Useful Symbols: <code> ⁻ ¹ ² ³ ₜ ₁ ₂ ₃</code></p>
-              {formData.variables.length > 0 && (
+              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2 mb-6">Variables</h2>
+              {(formData.variables || []).length > 0 && (
                 <div className="mb-6 space-y-3">
                   <h3 className="text-md font-medium text-slate-700">Added Variables:</h3>
                   <ul className="list-disc list-inside pl-2 space-y-2">
-                    {formData.variables.map((variable, index) => (
+                    {(formData.variables || []).map((variable, index) => (
                       <li key={index} className="text-sm text-slate-600 flex justify-between items-center p-2 bg-slate-50 rounded">
                         <span>
-                          <strong>Name:</strong> {variable.name},&nbsp;
-                          <strong>Symbol:</strong> <code>{variable.symbol}</code>,&nbsp;
-                          <strong>Unit:</strong> {variable.unit || 'N/A'}
+                          <strong>Name:</strong> {variable.name}, <strong>Symbol:</strong> <code>{variable.symbol}</code>, <strong>Unit:</strong> {variable.unit || 'N/A'}
                         </span>
                         <button type="button" onClick={() => handleRemoveVariable(index)} className={`${secondaryButtonClass} bg-red-100 text-red-700 hover:bg-red-200`}>Remove</button>
                       </li>
@@ -227,17 +273,16 @@ ${indentedSolveBody}
                 <h3 className="text-md font-medium text-slate-700 mb-3">Add New Variable:</h3>
                 <div className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-3 items-end">
                   <div>
-                    <label htmlFor="varName" className={labelClass}>Variable Name (Display)</label>
-                    <input type="text" name="name" id="varName" value={currentVariable.name} onChange={handleVariableInputChange} className={inputClass} placeholder="e.g., Coefficient a" />
+                    <label htmlFor="varName" className={labelClass}>Variable Name</label>
+                    <input type="text" name="name" id="varName" value={currentVariable.name} onChange={handleVariableInputChange} className={inputClass} placeholder="e.g., Force" />
                   </div>
                   <div>
-                    <label htmlFor="varSymbol" className={labelClass}>Variable Symbol (Code) <span className="text-red-500">*</span></label>
-                    <input type="text" name="symbol" id="varSymbol" value={currentVariable.symbol} onChange={handleVariableInputChange} className={inputClass} placeholder="e.g., a, x_1, mass" />
-                     <p className="mt-1 text-xs text-slate-500">Must be a valid JS identifier. Used in `solve` function.</p>
+                    <label htmlFor="varSymbol" className={labelClass}>Symbol (for code)</label>
+                    <input type="text" name="symbol" id="varSymbol" value={currentVariable.symbol} onChange={handleVariableInputChange} className={inputClass} placeholder="e.g., F, mass, R1" />
                   </div>
                   <div>
                     <label htmlFor="varUnit" className={labelClass}>Unit</label>
-                    <input type="text" name="unit" id="varUnit" value={currentVariable.unit} onChange={handleVariableInputChange} className={inputClass} placeholder="e.g., m/s, Ω, kg" />
+                    <input type="text" name="unit" id="varUnit" value={currentVariable.unit} onChange={handleVariableInputChange} className={inputClass} placeholder="e.g., N, kg, Ω" />
                   </div>
                 </div>
                 <button type="button" onClick={handleAddVariable} className={`${buttonClass} mt-4 bg-green-600 hover:bg-green-700`}>
@@ -248,32 +293,90 @@ ${indentedSolveBody}
             
             <hr/>
 
-            {/* Section 3: Solve Function */}
+            {/* Section 3: Type-specific Configuration */}
             <section>
-              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2 mb-6">Solve Function Logic 🧠</h2>
-              <div>
-                <label htmlFor="solveFunctionBody" className={labelClass}>
-                  JavaScript body for the <code>solve</code> function:
-                </label>
-                <p className="mt-1 mb-2 text-xs text-slate-500">
-                  Write the core logic. Input values are in the <code>values</code> object (e.g., <code>values.symbolName</code>).
-                  Return an object with calculated variable symbols as keys (e.g., <code>{'{ resultSymbol: calculatedValue }'}</code>).
-                </p>
-                <textarea
-                  name="solveFunctionBody"
-                  id="solveFunctionBody"
-                  value={formData.solveFunctionBody}
-                  onChange={handleFormInputChange}
-                  rows={15}
-                  className={`${inputClass} font-mono text-xs`}
-                  placeholder={initialSolveBodyPlaceholder}
-                ></textarea>
-              </div>
+              <h2 className="text-xl font-semibold text-slate-800 border-b pb-2 mb-6">Configuration</h2>
+              
+              {(formData.type === 'linear' || formData.type === 'physics') && (
+                <div>
+                  <h3 className="text-md font-medium text-slate-700 mb-3">Linear Relationships</h3>
+                  <p className="text-sm text-slate-600 mb-4">
+                    Define how to calculate each variable. Use variable symbols in formulas (e.g., "F / a" to get mass from force and acceleration).
+                  </p>
+                  
+                  {linearRelationships.length > 0 && (
+                    <div className="mb-4 space-y-2">
+                      {linearRelationships.map((rel, index) => (
+                        <div key={index} className="flex justify-between items-center p-2 bg-slate-50 rounded">
+                          <span className="text-sm"><strong>{rel.variable}</strong> = {rel.formula}</span>
+                          <button type="button" onClick={() => handleRemoveRelationship(index)} className={`${secondaryButtonClass} bg-red-100 text-red-700 hover:bg-red-200`}>Remove</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 items-end">
+                    <div>
+                      <label htmlFor="relVariable" className={labelClass}>Target Variable</label>
+                      <select name="variable" id="relVariable" value={currentRelationship.variable} onChange={handleRelationshipChange} className={inputClass}>
+                        <option value="">Select variable...</option>
+                        {(formData.variables || []).map(v => (
+                          <option key={v.symbol} value={v.symbol}>{v.symbol} ({v.name})</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="relFormula" className={labelClass}>Formula</label>
+                      <input type="text" name="formula" id="relFormula" value={currentRelationship.formula} onChange={handleRelationshipChange} className={inputClass} placeholder="e.g., I * R, F / a" />
+                    </div>
+                  </div>
+                  <button type="button" onClick={handleAddRelationship} className={`${buttonClass} mt-4 bg-green-600 hover:bg-green-700`}>
+                    Add Relationship
+                  </button>
+                </div>
+              )}
+
+              {formData.type === 'geometric' && (
+                <div>
+                  <label htmlFor="geometricFormula" className={labelClass}>Geometric Formula Type</label>
+                  <select name="formula" id="geometricFormula" value={formData.config?.formula || ''} onChange={handleConfigInputChange} className={inputClass}>
+                    <option value="">Select formula...</option>
+                    {geometricFormulas.map(formula => (
+                      <option key={formula.value} value={formula.value}>{formula.label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {formData.type === 'symbolic' && (
+                <div>
+                  <label htmlFor="equation" className={labelClass}>Equation (for symbolic solving)</label>
+                  <input type="text" name="equation" id="equation" value={formData.config?.equation || ''} onChange={handleConfigInputChange} className={inputClass} placeholder="e.g., F = m * a, V = I * R" />
+                  <p className="mt-1 text-xs text-slate-500">Enter the equation as it would appear mathematically (e.g., y = m * x + b)</p>
+                </div>
+              )}
+
+              {formData.type === 'quadratic' && (
+                <div className="p-4 bg-blue-50 rounded-md">
+                  <p className="text-sm text-blue-800">
+                    Quadratic equations automatically solve for x₁ and x₂ given coefficients a, b, and c.
+                    Make sure your variables are named 'a', 'b', 'c', 'x_1', and 'x_2'.
+                  </p>
+                </div>
+              )}
+
+              {formData.type === 'custom' && (
+                <div className="p-4 bg-yellow-50 rounded-md">
+                  <p className="text-sm text-yellow-800">
+                    Custom equations require manual implementation. You'll need to add the solve function manually to the generated code.
+                  </p>
+                </div>
+              )}
             </section>
 
             <div className="pt-5">
               <button type="submit" className={`${buttonClass} w-full sm:w-auto text-base`}>
-                Generate Equation Code
+                Generate Enhanced Equation Code
               </button>
             </div>
           </form>
@@ -282,7 +385,7 @@ ${indentedSolveBody}
             <section className="mt-12">
               <h2 className="text-xl font-semibold text-slate-800">Generated Code:</h2>
               <p className="mt-1 mb-2 text-sm text-slate-600">
-                Copy this code and add it to your <code>equations.ts</code> array.
+                Copy this code and add it to the <code>equationConfigs</code> array in <code>enhancedEquationsData.ts</code>.
               </p>
               <div className="relative bg-slate-800 text-white p-4 rounded-md shadow-lg overflow-x-auto">
                 <button
