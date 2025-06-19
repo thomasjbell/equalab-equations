@@ -136,7 +136,7 @@ export default function EnhancedEquationCard({
             </div>
             {/* Left-aligned LaTeX equation */}
             <div className="mb-1">
-              <div className="text-2xl text-left overflow-x-auto text-cyan-900 dark:text-cyan-100">
+              <div className="text-xl md:text-2xl text-left overflow-x-auto text-cyan-900 dark:text-cyan-100">
                 <BlockMath math={equation.latex} />
               </div>
             </div>
@@ -161,7 +161,7 @@ export default function EnhancedEquationCard({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
             className="overflow-hidden"
           >
             <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
