@@ -118,7 +118,7 @@ export default function EnhancedEquationCard({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 hover:shadow-xl">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-50 dark:border-gray-800 overflow-hidden transition-all duration-200 hover:shadow-xl">
       {/* Header */}
       <div
         className="p-6 cursor-pointer bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-750"

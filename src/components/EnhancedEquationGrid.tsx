@@ -65,7 +65,7 @@ export default function EnhancedEquationGrid() {
     <div className="space-y-6">
       <div>
         <h1 className="text-5xl font-bold text-cyan-950 text-center mb-4 dark:text-cyan-50">
-          Library
+          Equation Library
         </h1>
         <p className="text-center text-gray-600 dark:text-gray-400 mb-2 text-lg">
           Input fractions, surds, decimals → Get exact symbolic results
