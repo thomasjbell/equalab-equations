@@ -3,7 +3,7 @@ import React from "react";
 // import { link } from "fs";
 
 const LinkClass =
-  "hover:text-cyan-200 transition-colors dark:hover:text-cyan-400"; // Updated LinkClass for dark mode hover
+  "dark:text-gray-100 hover:text-cyan-200 transition-colors hover:bg-gradient-to-r hover:from-cyan-50 hover:to-cyan-200 dark:hover:bg-gradient-to-r dark:hover:from-cyan-50 dark:hover:to-cyan-200 hover:bg-clip-text"; // Updated LinkClass for dark mode hover
 
 const Footer = () => {
   return (
@@ -21,7 +21,7 @@ const Footer = () => {
           >
             {" "}
             {/* Dark mode heading color */}
-            <span className="bg-gradient-to-r from-cyan-300 to-cyan-200 text-transparent bg-clip-text">
+            <span className="bg-gradient-to-r from-cyan-50 to-cyan-200 text-transparent bg-clip-text">
               EquaLab
             </span>
           </h6>

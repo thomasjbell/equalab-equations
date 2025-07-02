@@ -31,7 +31,7 @@ export default function Navbar() {
                 <LittleLogo className="w-10 h-10" />
                 <div>
                   <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                    <span className="bg-gradient-to-r from-cyan-800 to-cyan-600 text-transparent bg-clip-text dark:bg-gradient-to-r dark:from-cyan-400 dark:to-cyan-300">EquaLab</span>
+                    <span className="bg-gradient-to-r from-cyan-600 to-cyan-700 text-transparent bg-clip-text dark:bg-gradient-to-r dark:from-cyan-50 dark:to-cyan-200">EquaLab</span>
                   </h1>
                   <p className="text-xs text-gray-500 -mt-1 dark:text-gray-300">Equations</p>
                 </div>
