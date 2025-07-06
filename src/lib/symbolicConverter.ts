@@ -1,9 +1,11 @@
 import { ExactNumber, Fraction, Surd } from '@/types/exactNumber';
 import { ExactMath } from './exactMath';
+import { NumberFormatter } from './utils/numberFormatter';
+import { UserSettings } from './contexts/SettingsContext';
 
 export class SymbolicConverter {
   
-  static convertToExact(decimal: number): ExactNumber {
+  static convertToExact(decimal: number, userSettings?: UserSettings): ExactNumber {
     // Handle special cases
     if (!isFinite(decimal)) {
       return {
@@ -61,14 +63,34 @@ export class SymbolicConverter {
       };
     }
 
-    // Fall back to decimal with appropriate precision
-    const precision = this.determinePrecision(decimal);
+    // Fall back to decimal - apply user formatting if available
+    let formattedLatex: string;
+    if (userSettings) {
+      formattedLatex = NumberFormatter.formatForLatex(decimal, userSettings);
+    } else {
+      // Default formatting when no user settings available
+      formattedLatex = this.formatDecimalDefault(decimal);
+    }
+
     return {
       type: 'decimal',
       decimal: decimal,
-      latex: decimal.toFixed(precision),
+      latex: formattedLatex,
       simplified: false
     };
+  }
+
+  // Default decimal formatting when no user settings available
+  private static formatDecimalDefault(decimal: number): string {
+    if (Math.abs(decimal) >= 1e6 || (Math.abs(decimal) < 1e-4 && decimal !== 0)) {
+      const scientificNotation = decimal.toExponential(4);
+      const [mantissa, exponent] = scientificNotation.split('e');
+      const exp = parseInt(exponent);
+      return `${parseFloat(mantissa)} \\times 10^{${exp}}`;
+    }
+    
+    // Use 6 significant figures as default
+    return parseFloat(decimal.toPrecision(6)).toString();
   }
 
   private static fractionToLatex(fraction: Fraction): string {
@@ -117,23 +139,14 @@ export class SymbolicConverter {
     return result;
   }
 
-  private static determinePrecision(decimal: number): number {
-    const absDecimal = Math.abs(decimal);
-    if (absDecimal >= 100) return 1;
-    if (absDecimal >= 10) return 2;
-    if (absDecimal >= 1) return 3;
-    if (absDecimal >= 0.1) return 4;
-    return 5;
-  }
-
   // Convert results from common operations
-  static convertQuadraticResults(a: number, b: number, c: number): {
+  static convertQuadraticResults(a: number, b: number, c: number, userSettings?: UserSettings): {
     discriminant: ExactNumber;
     x1?: ExactNumber;
     x2?: ExactNumber;
   } {
     const discriminant = b * b - 4 * a * c;
-    const discriminantExact = this.convertToExact(discriminant);
+    const discriminantExact = this.convertToExact(discriminant, userSettings);
     
     if (discriminant < 0) {
       return { discriminant: discriminantExact };
@@ -145,13 +158,13 @@ export class SymbolicConverter {
     
     return {
       discriminant: discriminantExact,
-      x1: this.convertToExact(x1),
-      x2: this.convertToExact(x2)
+      x1: this.convertToExact(x1, userSettings),
+      x2: this.convertToExact(x2, userSettings)
     };
   }
 
   // Convert results involving π
-  static convertWithPi(decimal: number): ExactNumber {
+  static convertWithPi(decimal: number, userSettings?: UserSettings): ExactNumber {
     const piRatio = decimal / Math.PI;
     const fraction = ExactMath.decimalToFraction(piRatio);
     
@@ -176,6 +189,6 @@ export class SymbolicConverter {
       };
     }
     
-    return this.convertToExact(decimal);
+    return this.convertToExact(decimal, userSettings);
   }
 }

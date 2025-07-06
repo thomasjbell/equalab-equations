@@ -1,6 +1,8 @@
 import "./globals.css";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { AuthProvider } from "@/lib/auth/AuthContext";
+import { SettingsProvider } from "@/lib/contexts/SettingsContext";
 import { Inter } from 'next/font/google'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -27,9 +29,13 @@ export default function RootLayout({
         <link rel="icon" href="favicon.svg" type="image/svg+xml" />
       </head>
       <body className={`dark:bg-gray-900 ${inter.className}`}>
-        <Navbar />
-        {children}
-        <Footer />
+        <AuthProvider>
+          <SettingsProvider>
+            <Navbar />
+            {children}
+            <Footer />
+          </SettingsProvider>
+        </AuthProvider>
       </body>
     </html>
   );

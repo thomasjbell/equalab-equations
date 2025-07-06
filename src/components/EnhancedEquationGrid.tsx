@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import EnhancedEquationCard from "./EnhancedEquationCard";
 import SearchBar from "./SearchBar";
 import SortDropdown from "./SortDropdown";
-import { symbolicEquations } from "../lib/symbolicEquationsData";
-import { ListBulletIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
+import { ListBulletIcon, Squares2X2Icon, CalculatorIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
+import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { DatabaseEquation } from "@/lib/services/equationSolver";
+
+interface DatabaseEquationWithFavorites extends DatabaseEquation {
+  profiles?: { name: string } | null;
+  user_favorites: Array<{ id: string }>;
+}
 
 export default function EnhancedEquationGrid() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -14,13 +21,74 @@ export default function EnhancedEquationGrid() {
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [displayMode, setDisplayMode] = useState<"list" | "grid">("list");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [equations, setEquations] = useState<DatabaseEquationWithFavorites[]>(
+    []
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const { user } = useAuth();
+  const supabase = createClient();
+
+  const fetchEquations = async () => {
+    try {
+      setLoading(true);
+
+      // Simple query to avoid relationship issues
+      const { data: equationsData, error: fetchError } = await supabase
+        .from("equations")
+        .select("*")
+        .eq("is_public", true)
+        .order("created_at", { ascending: false });
+
+      if (fetchError) {
+        console.error("Query error:", fetchError);
+        throw fetchError;
+      }
+
+      // Get user favorites separately if logged in
+      let userFavorites: string[] = [];
+      if (user) {
+        const { data: favorites } = await supabase
+          .from("user_favorites")
+          .select("equation_id")
+          .eq("user_id", user.id);
+
+        userFavorites = favorites?.map((f) => f.equation_id) || [];
+      }
+
+      // Transform data to match expected interface
+      const transformedEquations =
+        equationsData?.map((equation) => ({
+          ...equation,
+          profiles: equation.author_id ? { name: "System" } : null,
+          user_favorites: userFavorites.includes(equation.id)
+            ? [{ id: "favorite" }]
+            : [],
+        })) || [];
+
+      console.log("Fetched equations:", transformedEquations.length);
+      setEquations(transformedEquations);
+    } catch (err) {
+      console.error("Error fetching equations:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch equations"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEquations();
+  }, [user]);
 
   const uniqueCategories = useMemo(() => {
-    return [...new Set(symbolicEquations.map((eq) => eq.category))];
-  }, []);
+    return [...new Set(equations.map((eq) => eq.category))];
+  }, [equations]);
 
   const filteredAndSortedEquations = useMemo(() => {
-    let filtered = symbolicEquations.filter((equation) => {
+    let filtered = equations.filter((equation) => {
       const searchMatch =
         equation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         equation.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -41,7 +109,7 @@ export default function EnhancedEquationGrid() {
       }
       return 0;
     });
-  }, [searchTerm, sortBy, selectedTag]);
+  }, [searchTerm, sortBy, selectedTag, equations]);
 
   const handleCardToggle = (equationId: string) => {
     const newExpandedCards = new Set(expandedCards);
@@ -61,36 +129,142 @@ export default function EnhancedEquationGrid() {
     setSelectedTag(tag);
   };
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-5xl font-bold text-cyan-950 text-center mb-4 dark:text-cyan-50">
-          Equation Library
-        </h1>
-        <p className="text-center text-gray-600 dark:text-gray-400 mb-2 text-lg">
-          Input fractions, surds, decimals → Get exact symbolic results
-        </p>
-        <p className="text-center text-gray-500 dark:text-gray-500 mb-6 text-sm">
-          Try inputs like: <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">1/2</code>, 
-          <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded ml-2">sqrt(2)</code>, 
-          <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded ml-2">3*pi</code>, 
-          <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded ml-2">2 1/4</code>
-        </p>
-        <motion.div
-          className="bg-gradient-to-r from-cyan-800 to-cyan-500 h-0.5 w-1/3 md:w-1/4 mx-auto rounded-full"
-          initial={{ scaleX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          transition={{
-            duration: 0.6,
-            ease: "easeInOut",
-            delay: 0.1,
-          }}
-          viewport={{ once: true }}
-        />
-      </div>
+  const handleFavoriteToggle = async (
+    equationId: string,
+    isFavorited: boolean
+  ) => {
+    if (!user) return;
 
-      {/* Controls */}
-      <div className="flex flex-col gap-4">
+    // Optimistic update - update UI immediately
+    setEquations((prev) =>
+      prev.map((eq) => {
+        if (eq.id === equationId) {
+          return {
+            ...eq,
+            user_favorites: isFavorited ? [] : [{ id: "favorite" }],
+          };
+        }
+        return eq;
+      })
+    );
+
+    try {
+      if (isFavorited) {
+        const response = await fetch(
+          `/api/favorites?equation_id=${equationId}`,
+          {
+            method: "DELETE",
+          }
+        );
+        if (!response.ok) throw new Error("Failed to remove favorite");
+      } else {
+        const response = await fetch("/api/favorites", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ equation_id: equationId }),
+        });
+        if (!response.ok) throw new Error("Failed to add favorite");
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+
+      // Revert optimistic update on error
+      setEquations((prev) =>
+        prev.map((eq) => {
+          if (eq.id === equationId) {
+            return {
+              ...eq,
+              user_favorites: isFavorited ? [{ id: "favorite" }] : [],
+            };
+          }
+          return eq;
+        })
+      );
+
+      // Optionally show error message to user
+      alert("Failed to update favorite. Please try again.");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-xl text-gray-600 dark:text-gray-400">
+          Loading equations...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-xl text-red-600 dark:text-red-400">
+          Error: {error}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+  <div className="space-y-12">
+    {/* Header */}
+    <motion.div 
+      className="text-center"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      <div className="flex justify-center mb-6">
+        <motion.div
+          className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl"
+          whileHover={{ scale: 1.05, rotate: 5 }}
+          transition={{ type: "spring", stiffness: 300, damping: 10 }}
+        >
+          <CalculatorIcon className="w-8 h-8 text-white" />
+        </motion.div>
+      </div>
+      <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+        <span className="bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 text-transparent bg-clip-text">
+          Equation Library
+        </span>
+      </h1>
+      <p className="text-xl text-gray-600 dark:text-gray-400 mb-4 max-w-3xl mx-auto">
+        Discover powerful mathematical tools with exact symbolic computation
+      </p>
+      <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+        <motion.div 
+          className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
+          whileHover={{ scale: 1.05 }}
+        >
+          <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">1/2</code>
+          <span>Fractions</span>
+        </motion.div>
+        <motion.div 
+          className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
+          whileHover={{ scale: 1.05 }}
+        >
+          <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">sqrt(2)</code>
+          <span>Surds</span>
+        </motion.div>
+        <motion.div 
+          className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
+          whileHover={{ scale: 1.05 }}
+        >
+          <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">3*pi</code>
+          <span>Expressions</span>
+        </motion.div>
+      </div>
+    </motion.div>
+
+    {/* Controls */}
+    <motion.div 
+      className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.2 }}
+    >
+      <div className="flex flex-col gap-6">
         <div className="flex flex-row flex-wrap items-center gap-4">
           <div className="flex-1 min-w-0">
             <SearchBar
@@ -99,89 +273,115 @@ export default function EnhancedEquationGrid() {
               placeholder="Search equations, categories, or descriptions..."
             />
           </div>
-          <div className="md:hidden sm:w-auto">
+          <div className="flex items-center gap-4">
             <SortDropdown value={sortBy} onChange={setSortBy} />
-          </div>
-          <div className="hidden md:flex items-center gap-4">
-            <div className="sm:w-auto">
-              <SortDropdown value={sortBy} onChange={setSortBy} />
-            </div>
-            <button
+            <motion.button
               onClick={toggleDisplayMode}
-              className="appearance-none bg-white border border-gray-300 rounded-xl px-4 py-3 outline-none transition-all shadow-sm
-              dark:bg-gray-700 dark:border-gray-600 dark:shadow-none"
+              className="p-3 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               {displayMode === "list" ? (
-                <Squares2X2Icon className="h-6 w-6 text-cyan-900 dark:text-cyan-50" />
+                <Squares2X2Icon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
               ) : (
-                <ListBulletIcon className="h-6 w-6 text-cyan-900 dark:text-cyan-50" />
+                <ListBulletIcon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
               )}
-            </button>
+            </motion.button>
           </div>
         </div>
 
         {/* Tag List */}
-        <div className="overflow-x-auto whitespace-nowrap">
-          <button
-            className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium  ${
+        <div className="flex flex-wrap gap-2">
+          <motion.button
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
               selectedTag === null
-                ? "bg-cyan-600 text-cyan-50 hover:bg-cyan-700 dark:bg-cyan-700 dark:hover:bg-cyan-600"
-                : "bg-slate-200 text-cyan-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-cyan-50 dark:hover:bg-gray-600"
+                ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg"
+                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
             }`}
             onClick={() => handleTagSelect(null)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             All
-          </button>
+          </motion.button>
           {uniqueCategories.map((tag) => (
-            <button
+            <motion.button
               key={tag}
-              className={`inline-flex items-center rounded-full px-3 py-1 ml-2 text-sm font-medium  ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                 selectedTag === tag
-                  ? "bg-cyan-600 text-cyan-50 hover:bg-cyan-700 dark:bg-cyan-700 dark:hover:bg-cyan-600"
-                  : "bg-slate-200 text-cyan-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-cyan-50 dark:hover:bg-gray-600"
+                  ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
               }`}
               onClick={() => handleTagSelect(tag)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               {tag}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
+    </motion.div>
 
-      {/* Results Count */}
-      <div className="text-sm text-gray-600 dark:text-gray-400">
+    {/* Results Count */}
+    <motion.div 
+      className="text-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6, delay: 0.4 }}
+    >
+      <p className="text-gray-600 dark:text-gray-400">
         {filteredAndSortedEquations.length} equation
         {filteredAndSortedEquations.length !== 1 ? "s" : ""} found
-        {selectedTag && ` in category "${selectedTag}"`}
-      </div>
+        {selectedTag && ` in ${selectedTag}`}
+      </p>
+    </motion.div>
 
-      {/* Equation Cards */}
-      <div
-        className={
-          displayMode === "list"
-            ? "space-y-4"
-            : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4"
-        }
+    {/* Equation Cards */}
+    <motion.div
+      className={
+        displayMode === "list"
+          ? "space-y-6"
+          : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      }
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6, delay: 0.6 }}
+    >
+      {filteredAndSortedEquations.map((equation, index) => (
+        <motion.div 
+          key={equation.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: index * 0.1 }}
+        >
+          <EnhancedEquationCard
+            equation={equation}
+            isExpanded={expandedCards.has(equation.id)}
+            onToggle={() => handleCardToggle(equation.id)}
+            isFavorited={equation.user_favorites?.length > 0}
+            onFavoriteToggle={(isFavorited) => {
+              handleFavoriteToggle(equation.id, isFavorited);
+            }}
+            author={equation.profiles?.name}
+            showFavoriteButton={!!user}
+          />
+        </motion.div>
+      ))}
+    </motion.div>
+
+    {filteredAndSortedEquations.length === 0 && (
+      <motion.div 
+        className="text-center py-20"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
       >
-        {filteredAndSortedEquations.map((equation) => (
-          <div key={equation.id}>
-            <EnhancedEquationCard
-              equation={equation}
-              isExpanded={expandedCards.has(equation.id)}
-              onToggle={() => handleCardToggle(equation.id)}
-            />
-          </div>
-        ))}
-      </div>
-
-      {filteredAndSortedEquations.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg dark:text-gray-400">
-            No equations found matching your search
-            {selectedTag && ` in category "${selectedTag}"`}.
-          </p>
-        </div>
-      )}
-    </div>
-  );
+        <p className="text-gray-500 text-xl dark:text-gray-400">
+          No equations found matching your search
+          {selectedTag && ` in category "${selectedTag}"`}.
+        </p>
+      </motion.div>
+    )}
+  </div>
+);
 }

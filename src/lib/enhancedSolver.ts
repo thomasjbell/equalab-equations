@@ -3,12 +3,14 @@ import { SymbolicConverter } from "./symbolicConverter";
 import { SolverResult, ExactNumber } from "@/types/exactNumber";
 import { ExactMath } from "./exactMath";
 import { evaluate } from "mathjs";
+import { UserSettings } from "./contexts/SettingsContext";
 
 export class EnhancedSolver {
   // Solve linear relationships
   static solveLinear(
     relationships: Record<string, string>,
-    inputs: Record<string, number>
+    inputs: Record<string, number>,
+    userSettings?: UserSettings
   ): SolverResult {
     const results: SolverResult = {};
 
@@ -17,7 +19,7 @@ export class EnhancedSolver {
         try {
           const value = this.evaluateFormula(formula, inputs);
           if (isFinite(value)) {
-            results[variable] = SymbolicConverter.convertToExact(value);
+            results[variable] = SymbolicConverter.convertToExact(value, userSettings);
           }
         } catch (error) {
           console.warn(`Could not solve for ${variable}:`, error);
@@ -29,13 +31,13 @@ export class EnhancedSolver {
   }
 
   // Solve quadratic equations with exact symbolic results
-  static solveQuadratic(inputs: Record<string, number>): SolverResult {
+  static solveQuadratic(inputs: Record<string, number>, userSettings?: UserSettings): SolverResult {
     const { a, b, c } = inputs;
     const results: SolverResult = {};
 
     if (a !== undefined && b !== undefined && c !== undefined && a !== 0) {
       const discriminant = b * b - 4 * a * c;
-      results.discriminant = SymbolicConverter.convertToExact(discriminant);
+      results.discriminant = SymbolicConverter.convertToExact(discriminant, userSettings);
 
       if (discriminant < 0) {
         return results;
@@ -43,7 +45,7 @@ export class EnhancedSolver {
 
       if (discriminant === 0) {
         const solution = -b / (2 * a);
-        const exactSolution = SymbolicConverter.convertToExact(solution);
+        const exactSolution = SymbolicConverter.convertToExact(solution, userSettings);
         results.x_1 = exactSolution;
         results.x_2 = exactSolution;
         return results;
@@ -57,11 +59,11 @@ export class EnhancedSolver {
         const intSqrt = Math.round(sqrtDiscriminant);
         const x1 = (-b + intSqrt) / twoA;
         const x2 = (-b - intSqrt) / twoA;
-        results.x_1 = SymbolicConverter.convertToExact(x1);
-        results.x_2 = SymbolicConverter.convertToExact(x2);
+        results.x_1 = SymbolicConverter.convertToExact(x1, userSettings);
+        results.x_2 = SymbolicConverter.convertToExact(x2, userSettings);
       } else {
-        results.x_1 = this.createQuadraticSolution(-b, discriminant, twoA, true);
-        results.x_2 = this.createQuadraticSolution(-b, discriminant, twoA, false);
+        results.x_1 = this.createQuadraticSolution(-b, discriminant, twoA, true, userSettings);
+        results.x_2 = this.createQuadraticSolution(-b, discriminant, twoA, false, userSettings);
       }
     }
 
@@ -69,7 +71,7 @@ export class EnhancedSolver {
   }
 
   // Solve cubic equations using Cardano's formula
-  static solveCubic(inputs: Record<string, number>): SolverResult {
+  static solveCubic(inputs: Record<string, number>, userSettings?: UserSettings): SolverResult {
     const { a, b, c, d } = inputs;
     const results: SolverResult = {};
 
@@ -80,7 +82,7 @@ export class EnhancedSolver {
       
       // Calculate discriminant
       const discriminant = -(4*p*p*p + 27*q*q);
-      results.discriminant = SymbolicConverter.convertToExact(discriminant);
+      results.discriminant = SymbolicConverter.convertToExact(discriminant, userSettings);
 
       if (discriminant > 0) {
         // Three real roots (trigonometric solution)
@@ -91,22 +93,22 @@ export class EnhancedSolver {
         const x2 = m * Math.cos(theta - 2*Math.PI/3) - b/(3*a);
         const x3 = m * Math.cos(theta - 4*Math.PI/3) - b/(3*a);
         
-        results.x_1 = SymbolicConverter.convertToExact(x1);
-        results.x_2 = SymbolicConverter.convertToExact(x2);
-        results.x_3 = SymbolicConverter.convertToExact(x3);
+        results.x_1 = SymbolicConverter.convertToExact(x1, userSettings);
+        results.x_2 = SymbolicConverter.convertToExact(x2, userSettings);
+        results.x_3 = SymbolicConverter.convertToExact(x3, userSettings);
       } else {
         // One real root (Cardano's formula)
         const u = Math.cbrt(-q/2 + Math.sqrt(-discriminant/108));
         const v = Math.cbrt(-q/2 - Math.sqrt(-discriminant/108));
         const x1 = u + v - b/(3*a);
         
-        results.x_1 = SymbolicConverter.convertToExact(x1);
+        results.x_1 = SymbolicConverter.convertToExact(x1, userSettings);
         
         if (discriminant === 0) {
           // Multiple roots
           const x2 = -u/2 - b/(3*a);
-          results.x_2 = SymbolicConverter.convertToExact(x2);
-          results.x_3 = SymbolicConverter.convertToExact(x2);
+          results.x_2 = SymbolicConverter.convertToExact(x2, userSettings);
+          results.x_3 = SymbolicConverter.convertToExact(x2, userSettings);
         }
       }
     }
@@ -118,13 +120,14 @@ export class EnhancedSolver {
   static solveLinearSystem(
     equations: string[],
     variables: string[],
-    inputs: Record<string, number>
+    inputs: Record<string, number>,
+    userSettings?: UserSettings
   ): SolverResult {
     const results: SolverResult = {};
     
     if (variables.length === 2 && equations.length === 2) {
       try {
-        const solution = this.solve2x2System(equations, variables, inputs);
+        const solution = this.solve2x2System(equations, variables, inputs, userSettings);
         Object.assign(results, solution);
       } catch (error) {
         console.warn("Could not solve 2x2 system:", error);
@@ -137,7 +140,8 @@ export class EnhancedSolver {
   // Enhanced geometric solver
   static solveGeometric(
     formula: string,
-    inputs: Record<string, number>
+    inputs: Record<string, number>,
+    userSettings?: UserSettings
   ): SolverResult {
     const results: SolverResult = {};
 
@@ -145,87 +149,87 @@ export class EnhancedSolver {
       case "circle_area":
         if (inputs.r !== undefined && inputs.A === undefined) {
           const area = Math.PI * inputs.r * inputs.r;
-          results.A = SymbolicConverter.convertWithPi(area);
+          results.A = SymbolicConverter.convertWithPi(area, userSettings);
         }
         if (inputs.A !== undefined && inputs.r === undefined) {
           const radius = Math.sqrt(inputs.A / Math.PI);
-          results.r = SymbolicConverter.convertToExact(radius);
+          results.r = SymbolicConverter.convertToExact(radius, userSettings);
         }
         break;
 
       case "circle_circumference":
         if (inputs.r !== undefined && inputs.C === undefined) {
           const circumference = 2 * Math.PI * inputs.r;
-          results.C = SymbolicConverter.convertWithPi(circumference);
+          results.C = SymbolicConverter.convertWithPi(circumference, userSettings);
         }
         if (inputs.C !== undefined && inputs.r === undefined) {
           const radius = inputs.C / (2 * Math.PI);
-          results.r = SymbolicConverter.convertToExact(radius);
+          results.r = SymbolicConverter.convertToExact(radius, userSettings);
         }
         break;
 
       case "sphere_volume":
         if (inputs.r !== undefined && inputs.V === undefined) {
           const volume = (4 * Math.PI * Math.pow(inputs.r, 3)) / 3;
-          results.V = SymbolicConverter.convertWithPi(volume);
+          results.V = SymbolicConverter.convertWithPi(volume, userSettings);
         }
         if (inputs.V !== undefined && inputs.r === undefined) {
           const radius = Math.pow((3 * inputs.V) / (4 * Math.PI), 1 / 3);
-          results.r = SymbolicConverter.convertToExact(radius);
+          results.r = SymbolicConverter.convertToExact(radius, userSettings);
         }
         break;
 
       case "sphere_surface_area":
         if (inputs.r !== undefined && inputs.A === undefined) {
           const area = 4 * Math.PI * inputs.r * inputs.r;
-          results.A = SymbolicConverter.convertWithPi(area);
+          results.A = SymbolicConverter.convertWithPi(area, userSettings);
         }
         if (inputs.A !== undefined && inputs.r === undefined) {
           const radius = Math.sqrt(inputs.A / (4 * Math.PI));
-          results.r = SymbolicConverter.convertToExact(radius);
+          results.r = SymbolicConverter.convertToExact(radius, userSettings);
         }
         break;
 
       case "cylinder_volume":
         if (inputs.r !== undefined && inputs.h !== undefined && inputs.V === undefined) {
           const volume = Math.PI * inputs.r * inputs.r * inputs.h;
-          results.V = SymbolicConverter.convertWithPi(volume);
+          results.V = SymbolicConverter.convertWithPi(volume, userSettings);
         }
         break;
 
       case "cone_volume":
         if (inputs.r !== undefined && inputs.h !== undefined && inputs.V === undefined) {
           const volume = (Math.PI * inputs.r * inputs.r * inputs.h) / 3;
-          results.V = SymbolicConverter.convertWithPi(volume);
+          results.V = SymbolicConverter.convertWithPi(volume, userSettings);
         }
         break;
 
       case "pythagoras":
         if (inputs.a !== undefined && inputs.b !== undefined && inputs.c === undefined) {
           const c = Math.sqrt(inputs.a * inputs.a + inputs.b * inputs.b);
-          results.c = SymbolicConverter.convertToExact(c);
+          results.c = SymbolicConverter.convertToExact(c, userSettings);
         }
         if (inputs.a !== undefined && inputs.c !== undefined && inputs.b === undefined) {
           const b = Math.sqrt(inputs.c * inputs.c - inputs.a * inputs.a);
-          results.b = SymbolicConverter.convertToExact(b);
+          results.b = SymbolicConverter.convertToExact(b, userSettings);
         }
         if (inputs.b !== undefined && inputs.c !== undefined && inputs.a === undefined) {
           const a = Math.sqrt(inputs.c * inputs.c - inputs.b * inputs.b);
-          results.a = SymbolicConverter.convertToExact(a);
+          results.a = SymbolicConverter.convertToExact(a, userSettings);
         }
         break;
 
       case "triangle_area":
         if (inputs.base !== undefined && inputs.height !== undefined && inputs.A === undefined) {
           const area = 0.5 * inputs.base * inputs.height;
-          results.A = SymbolicConverter.convertToExact(area);
+          results.A = SymbolicConverter.convertToExact(area, userSettings);
         }
         break;
 
       case "rectangle_area":
         if (inputs.length !== undefined && inputs.width !== undefined && inputs.A === undefined) {
           const area = inputs.length * inputs.width;
-          results.A = SymbolicConverter.convertToExact(area);
+          results.A = SymbolicConverter.convertToExact(area, userSettings);
         }
         break;
     }
@@ -236,7 +240,8 @@ export class EnhancedSolver {
   // Enhanced physics solver
   static solvePhysics(
     formula: string,
-    inputs: Record<string, number>
+    inputs: Record<string, number>,
+    userSettings?: UserSettings
   ): SolverResult {
     const results: SolverResult = {};
 
@@ -244,42 +249,42 @@ export class EnhancedSolver {
       case "kinetic_energy":
         if (inputs.m !== undefined && inputs.v !== undefined && inputs.KE === undefined) {
           const ke = 0.5 * inputs.m * inputs.v * inputs.v;
-          results.KE = SymbolicConverter.convertToExact(ke);
+          results.KE = SymbolicConverter.convertToExact(ke, userSettings);
         }
         break;
 
       case "potential_energy":
         if (inputs.m !== undefined && inputs.g !== undefined && inputs.h !== undefined && inputs.PE === undefined) {
           const pe = inputs.m * inputs.g * inputs.h;
-          results.PE = SymbolicConverter.convertToExact(pe);
+          results.PE = SymbolicConverter.convertToExact(pe, userSettings);
         }
         break;
 
       case "force":
         if (inputs.m !== undefined && inputs.a !== undefined && inputs.F === undefined) {
           const force = inputs.m * inputs.a;
-          results.F = SymbolicConverter.convertToExact(force);
+          results.F = SymbolicConverter.convertToExact(force, userSettings);
         }
         break;
 
       case "work":
         if (inputs.F !== undefined && inputs.d !== undefined && inputs.W === undefined) {
           const work = inputs.F * inputs.d;
-          results.W = SymbolicConverter.convertToExact(work);
+          results.W = SymbolicConverter.convertToExact(work, userSettings);
         }
         break;
 
       case "power":
         if (inputs.W !== undefined && inputs.t !== undefined && inputs.P === undefined) {
           const power = inputs.W / inputs.t;
-          results.P = SymbolicConverter.convertToExact(power);
+          results.P = SymbolicConverter.convertToExact(power, userSettings);
         }
         break;
 
       case "momentum":
         if (inputs.m !== undefined && inputs.v !== undefined && inputs.p === undefined) {
           const momentum = inputs.m * inputs.v;
-          results.p = SymbolicConverter.convertToExact(momentum);
+          results.p = SymbolicConverter.convertToExact(momentum, userSettings);
         }
         break;
     }
@@ -288,7 +293,7 @@ export class EnhancedSolver {
   }
 
   // SUVAT equations solver
-  static solveSUVAT(inputs: Record<string, number>): SolverResult {
+  static solveSUVAT(inputs: Record<string, number>, userSettings?: UserSettings): SolverResult {
     const { s, u, v, a, t } = inputs;
     const results: SolverResult = {};
     
@@ -307,8 +312,8 @@ export class EnhancedSolver {
           if (u !== undefined && v !== undefined && t !== undefined) {
             const calc_a = (v - u) / t;
             const calc_s = u * t + 0.5 * calc_a * t * t;
-            results.a = SymbolicConverter.convertToExact(calc_a);
-            results.s = SymbolicConverter.convertToExact(calc_s);
+            results.a = SymbolicConverter.convertToExact(calc_a, userSettings);
+            results.s = SymbolicConverter.convertToExact(calc_s, userSettings);
           }
           break;
           
@@ -317,8 +322,8 @@ export class EnhancedSolver {
             const calc_a = (v * v - u * u) / (2 * s);
             const calc_t = (v - u) / calc_a;
             if (isFinite(calc_a) && isFinite(calc_t) && calc_t > 0) {
-              results.a = SymbolicConverter.convertToExact(calc_a);
-              results.t = SymbolicConverter.convertToExact(calc_t);
+              results.a = SymbolicConverter.convertToExact(calc_a, userSettings);
+              results.t = SymbolicConverter.convertToExact(calc_t, userSettings);
             }
           }
           break;
@@ -327,8 +332,8 @@ export class EnhancedSolver {
           if (s !== undefined && u !== undefined && t !== undefined) {
             const calc_a = (2 * (s - u * t)) / (t * t);
             const calc_v = u + calc_a * t;
-            results.a = SymbolicConverter.convertToExact(calc_a);
-            results.v = SymbolicConverter.convertToExact(calc_v);
+            results.a = SymbolicConverter.convertToExact(calc_a, userSettings);
+            results.v = SymbolicConverter.convertToExact(calc_v, userSettings);
           }
           break;
           
@@ -336,8 +341,8 @@ export class EnhancedSolver {
           if (s !== undefined && v !== undefined && t !== undefined) {
             const calc_a = (2 * (s - v * t)) / (-t * t);
             const calc_u = v - calc_a * t;
-            results.a = SymbolicConverter.convertToExact(calc_a);
-            results.u = SymbolicConverter.convertToExact(calc_u);
+            results.a = SymbolicConverter.convertToExact(calc_a, userSettings);
+            results.u = SymbolicConverter.convertToExact(calc_u, userSettings);
           }
           break;
           
@@ -346,8 +351,8 @@ export class EnhancedSolver {
             const calc_t = (v - u) / a;
             const calc_s = u * calc_t + 0.5 * a * calc_t * calc_t;
             if (isFinite(calc_t) && calc_t > 0) {
-              results.t = SymbolicConverter.convertToExact(calc_t);
-              results.s = SymbolicConverter.convertToExact(calc_s);
+              results.t = SymbolicConverter.convertToExact(calc_t, userSettings);
+              results.s = SymbolicConverter.convertToExact(calc_s, userSettings);
             }
           }
           break;
@@ -356,8 +361,8 @@ export class EnhancedSolver {
           if (v !== undefined && a !== undefined && t !== undefined) {
             const calc_u = v - a * t;
             const calc_s = calc_u * t + 0.5 * a * t * t;
-            results.u = SymbolicConverter.convertToExact(calc_u);
-            results.s = SymbolicConverter.convertToExact(calc_s);
+            results.u = SymbolicConverter.convertToExact(calc_u, userSettings);
+            results.s = SymbolicConverter.convertToExact(calc_s, userSettings);
           }
           break;
           
@@ -365,8 +370,8 @@ export class EnhancedSolver {
           if (u !== undefined && a !== undefined && t !== undefined) {
             const calc_v = u + a * t;
             const calc_s = u * t + 0.5 * a * t * t;
-            results.v = SymbolicConverter.convertToExact(calc_v);
-            results.s = SymbolicConverter.convertToExact(calc_s);
+            results.v = SymbolicConverter.convertToExact(calc_v, userSettings);
+            results.s = SymbolicConverter.convertToExact(calc_s, userSettings);
           }
           break;
           
@@ -381,8 +386,8 @@ export class EnhancedSolver {
               const calc_t = (-B + Math.sqrt(discriminant)) / (2 * A);
               if (calc_t > 0) {
                 const calc_u = v - a * calc_t;
-                results.t = SymbolicConverter.convertToExact(calc_t);
-                results.u = SymbolicConverter.convertToExact(calc_u);
+                results.t = SymbolicConverter.convertToExact(calc_t, userSettings);
+                results.u = SymbolicConverter.convertToExact(calc_u, userSettings);
               }
             }
           }
@@ -399,8 +404,8 @@ export class EnhancedSolver {
               const calc_t = (-B + Math.sqrt(discriminant)) / (2 * A);
               if (calc_t > 0) {
                 const calc_v = u + a * calc_t;
-                results.t = SymbolicConverter.convertToExact(calc_t);
-                results.v = SymbolicConverter.convertToExact(calc_v);
+                results.t = SymbolicConverter.convertToExact(calc_t, userSettings);
+                results.v = SymbolicConverter.convertToExact(calc_v, userSettings);
               }
             }
           }
@@ -410,8 +415,8 @@ export class EnhancedSolver {
           if (s !== undefined && a !== undefined && t !== undefined) {
             const calc_u = (s - 0.5 * a * t * t) / t;
             const calc_v = calc_u + a * t;
-            results.u = SymbolicConverter.convertToExact(calc_u);
-            results.v = SymbolicConverter.convertToExact(calc_v);
+            results.u = SymbolicConverter.convertToExact(calc_u, userSettings);
+            results.v = SymbolicConverter.convertToExact(calc_v, userSettings);
           }
           break;
       }
@@ -428,7 +433,8 @@ export class EnhancedSolver {
     numeratorConstant: number,
     discriminant: number,
     denominator: number,
-    isPositive: boolean
+    isPositive: boolean,
+    userSettings?: UserSettings
   ): ExactNumber {
     const simplifiedSurd = ExactMath.simplifySurd({
       coefficient: 1,
@@ -487,7 +493,8 @@ export class EnhancedSolver {
   private static solve2x2System(
     equations: string[],
     variables: string[],
-    inputs: Record<string, number>
+    inputs: Record<string, number>,
+    userSettings?: UserSettings
   ): SolverResult {
     const results: SolverResult = {};
     return results;
@@ -511,6 +518,4 @@ export class EnhancedSolver {
 
     return evaluate(expr);
   }
-
-  
 }

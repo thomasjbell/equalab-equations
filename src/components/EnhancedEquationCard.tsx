@@ -1,28 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDownIcon, ChevronUpIcon, ClipboardDocumentIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, ChevronUpIcon, ClipboardDocumentIcon, HeartIcon, ShareIcon } from "@heroicons/react/24/outline";
+import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence } from "framer-motion";
 import { InlineMath, BlockMath } from 'react-katex';
-import { SymbolicEquation } from "@/types/symbolicEquation";
 import SmartMathInput from "./input/SmartMathInput";
 import ToggleableResult from "./display/ToggleableResult";
+import ShareModal from "./ShareModal";
 import { ExactNumber } from "@/types/exactNumber";
+import { EquationSolverService, DatabaseEquation } from "@/lib/services/equationSolver";
+import { useSettings } from "@/lib/contexts/SettingsContext";
 
 interface EnhancedEquationCardProps {
-  equation: SymbolicEquation;
+  equation: DatabaseEquation;
   isExpanded: boolean;
   onToggle: () => void;
+  isFavorited?: boolean;
+  onFavoriteToggle?: (isFavorited: boolean) => void;
+  author?: string;
+  showFavoriteButton?: boolean;
 }
 
 export default function EnhancedEquationCard({
   equation,
   isExpanded,
   onToggle,
+  isFavorited = false,
+  onFavoriteToggle,
+  author,
+  showFavoriteButton = false,
 }: EnhancedEquationCardProps) {
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [parsedInputs, setParsedInputs] = useState<Record<string, ExactNumber>>({});
   const [results, setResults] = useState<Record<string, ExactNumber>>({});
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  const { settings } = useSettings();
 
   const handleInputChange = (variable: string, value: string, parsed?: ExactNumber) => {
     const newInputs = { ...inputs, [variable]: value };
@@ -40,16 +55,14 @@ export default function EnhancedEquationCard({
     setInputs(newInputs);
     setParsedInputs(newParsedInputs);
     
-    // Auto-solve when we have valid inputs
     if (Object.keys(newParsedInputs).length > 0) {
       try {
-        // Convert parsed inputs to decimals for solving
         const decimalInputs: Record<string, number> = {};
         Object.entries(newParsedInputs).forEach(([key, exactNum]) => {
           decimalInputs[key] = exactNum.decimal;
         });
         
-        const newResults = equation.solve(decimalInputs);
+        const newResults = EquationSolverService.solveEquation(equation, decimalInputs, settings);
         setResults(newResults);
       } catch (error) {
         console.error("Solving error:", error);
@@ -73,19 +86,31 @@ export default function EnhancedEquationCard({
       const newParsedInputs: Record<string, ExactNumber> = {};
       
       Object.entries(example.input).forEach(([key, value]) => {
-        newInputs[key] = value.toString();
-        newParsedInputs[key] = {
-          type: 'decimal',
-          decimal: value,
-          latex: value.toString(),
-          simplified: false
-        };
+        const numericValue = typeof value === 'number' ? value : parseFloat(value as string);
+        
+        if (!isNaN(numericValue)) {
+          newInputs[key] = numericValue.toString();
+          newParsedInputs[key] = {
+            type: 'decimal',
+            decimal: numericValue,
+            latex: numericValue.toString(),
+            simplified: false
+          };
+        }
       });
       
       setInputs(newInputs);
       setParsedInputs(newParsedInputs);
       
-      const newResults = equation.solve(example.input);
+      const numericInputs: Record<string, number> = {};
+      Object.entries(example.input).forEach(([key, value]) => {
+        const numericValue = typeof value === 'number' ? value : parseFloat(value as string);
+        if (!isNaN(numericValue)) {
+          numericInputs[key] = numericValue;
+        }
+      });
+      
+      const newResults = EquationSolverService.solveEquation(equation, numericInputs, settings);
       setResults(newResults);
     }
   };
@@ -95,6 +120,23 @@ export default function EnhancedEquationCard({
       return `${variable} = ${result.latex}`;
     });
     navigator.clipboard.writeText(resultStrings.join('\n'));
+  };
+
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onFavoriteToggle && !favoriteLoading) {
+      setFavoriteLoading(true);
+      try {
+        await onFavoriteToggle(isFavorited);
+      } finally {
+        setFavoriteLoading(false);
+      }
+    }
+  };
+
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsShareModalOpen(true);
   };
 
   const getVariableStatus = (variable: string) => {
@@ -118,141 +160,215 @@ export default function EnhancedEquationCard({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-50 dark:border-gray-800 overflow-hidden transition-all duration-200 hover:shadow-xl">
-      {/* Header */}
-      <div
-        className="p-6 cursor-pointer bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-750"
-        onClick={onToggle}
+    <>
+      <motion.div 
+        className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 overflow-hidden transition-all duration-200 hover:shadow-xl hover:border-cyan-300/50 dark:hover:border-cyan-600/50"
+        whileHover={{ y: -1 }}
+        transition={{ duration: 0.2 }}
       >
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-3">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {equation.name}
-              </h3>
-              <span className="px-3 py-1 bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200 text-sm font-medium rounded-full">
-                {equation.category}
-              </span>
-            </div>
-            {/* Left-aligned LaTeX equation */}
-            <div className="mb-1">
-              <div className="text-xl md:text-2xl text-left overflow-x-auto text-cyan-900 dark:text-cyan-100">
-                <BlockMath math={equation.latex} />
+        {/* Header */}
+        <div
+          className="p-6 cursor-pointer"
+          onClick={onToggle}
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-4">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {equation.name}
+                </h3>
+                <span className="px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-medium rounded-full">
+                  {equation.category}
+                </span>
+                {author && (
+                  <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-full">
+                    by {author}
+                  </span>
+                )}
               </div>
+              
+              {/* LaTeX equation - simple styling */}
+              <div className="mb-3">
+                <div className="text-xl md:text-2xl text-left overflow-x-auto text-cyan-900 dark:text-cyan-100">
+                  <BlockMath math={equation.latex} />
+                </div>
+              </div>
+              
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {equation.description}
+              </p>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              {equation.description}
-            </p>
-          </div>
-          <div className="ml-4 flex items-center">
-            {isExpanded ? (
-              <ChevronUpIcon className="h-6 w-6 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-            ) : (
-              <ChevronDownIcon className="h-6 w-6 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-            )}
+            
+            <div className="ml-4 flex items-center gap-2">
+              {/* Share Button */}
+              <motion.button
+                onClick={handleShareClick}
+                className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
+                title="Share this equation"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <ShareIcon className="h-5 w-5" />
+              </motion.button>
+
+              {/* Favorite Button */}
+              {showFavoriteButton && (
+                <motion.button
+                  onClick={handleFavoriteClick}
+                  disabled={favoriteLoading}
+                  className={`p-2 transition-colors ${
+                    favoriteLoading 
+                      ? 'text-gray-300 cursor-not-allowed' 
+                      : 'text-gray-400 hover:text-red-500'
+                  }`}
+                  title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                  whileHover={!favoriteLoading ? { scale: 1.1 } : {}}
+                  whileTap={!favoriteLoading ? { scale: 0.9 } : {}}
+                >
+                  {favoriteLoading ? (
+                    <motion.div 
+                      className="h-5 w-5 border-2 border-gray-300 border-t-red-500 rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
+                  ) : isFavorited ? (
+                    <HeartIconSolid className="h-5 w-5 text-red-500" />
+                  ) : (
+                    <HeartIcon className="h-5 w-5" />
+                  )}
+                </motion.button>
+              )}
+
+              {/* Expand/Collapse Button */}
+              <motion.button
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <motion.div
+                  animate={{ rotate: isExpanded ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDownIcon className="h-6 w-6" />
+                </motion.div>
+              </motion.button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Expanded Content */}
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: "easeInOut" }}
-            className="overflow-hidden"
-          >
-            <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-              
-              {/* Controls */}
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={clearAll}
-                    className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-600 text-cyan-900 dark:text-gray-200 rounded-full hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors duration-150 font-medium"
-                  >
-                    Clear All
-                  </button>
-                  {equation.examples && equation.examples.length > 0 && (
-                    <button
-                      onClick={loadExample}
-                      className="px-4 py-2 text-sm bg-cyan-500 dark:bg-cyan-600 text-white rounded-full hover:bg-cyan-600 dark:hover:bg-cyan-500 transition-colors duration-150 font-medium"
+        {/* Expanded Content */}
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                
+                {/* Controls */}
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                  <div className="flex flex-wrap gap-3">
+                    <motion.button
+                      onClick={clearAll}
+                      className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-600 text-cyan-900 dark:text-gray-200 rounded-full hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors font-medium"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
-                      Load Example
-                    </button>
-                  )}
-                  {Object.keys(results).length > 0 && (
-                    <button
-                      onClick={copyResults}
-                      className="px-4 py-2 text-sm bg-green-500 dark:bg-green-600 text-white rounded-full hover:bg-green-600 dark:hover:bg-green-500 transition-colors duration-150 flex items-center gap-2 font-medium"
-                    >
-                      <ClipboardDocumentIcon className="h-4 w-4" />
-                      Copy Results
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Variables Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {equation.variables.map((variable) => {
-                  const status = getVariableStatus(variable.symbol);
-                  
-                  return (
-                    <div
-                      key={variable.symbol}
-                      className={`p-4 rounded-lg border-2 transition-colors ${getVariableStatusClass(status)}`}
-                    >
-                      {status === 'result' ? (
-                        <div className="space-y-2">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {variable.name}
-                            {variable.unit && (
-                              <span className="text-gray-500 dark:text-gray-400 ml-1">
-                                ({variable.unit})
-                              </span>
-                            )}
-                          </label>
-                          <ToggleableResult
-                            result={results[variable.symbol]}
-                            defaultMode="symbolic"
-                            allowToggle={true}
-                            showBothModes={false}
-                          />
-                        </div>
-                      ) : (
-                        <SmartMathInput
-                          value={inputs[variable.symbol] || ""}
-                          onChange={(value, parsed) => handleInputChange(variable.symbol, value, parsed)}
-                          label={variable.name}
-                          unit={variable.unit}
-                          showPreview={true}
-                          showSuggestions={false}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              
-              {/* Results Summary */}
-              {Object.keys(results).length > 0 && (
-                <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-600">
-                  <h4 className="text-sm font-semibold text-green-800 dark:text-green-200 mb-2">
-                    ✨ Results computed in exact symbolic form
-                  </h4>
-                  <div className="text-sm text-green-700 dark:text-green-300">
-                    {Object.keys(results).length} variable{Object.keys(results).length !== 1 ? 's' : ''} solved. 
-                    Click the toggle button next to each result to switch between exact and decimal forms.
+                      Clear All
+                    </motion.button>
+                    {equation.examples && equation.examples.length > 0 && (
+                      <motion.button
+                        onClick={loadExample}
+                        className="px-4 py-2 text-sm bg-cyan-500 dark:bg-cyan-600 text-white rounded-full hover:bg-cyan-600 dark:hover:bg-cyan-500 transition-colors font-medium"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Load Example
+                      </motion.button>
+                    )}
+                    {Object.keys(results).length > 0 && (
+                      <motion.button
+                        onClick={copyResults}
+                        className="px-4 py-2 text-sm bg-green-500 dark:bg-green-600 text-white rounded-full hover:bg-green-600 dark:hover:bg-green-500 transition-colors flex items-center gap-2 font-medium"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <ClipboardDocumentIcon className="h-4 w-4" />
+                        Copy Results
+                      </motion.button>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+
+                {/* Variables Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {equation.variables.map((variable) => {
+                    const status = getVariableStatus(variable.symbol);
+                    
+                    return (
+                      <div
+                        key={variable.symbol}
+                        className={`p-4 rounded-lg border-2 transition-colors ${getVariableStatusClass(status)}`}
+                      >
+                        {status === 'result' ? (
+                          <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {variable.name}
+                              {variable.unit && (
+                                <span className="text-gray-500 dark:text-gray-400 ml-1">
+                                  ({variable.unit})
+                                </span>
+                              )}
+                            </label>
+                            <ToggleableResult
+                              result={results[variable.symbol]}
+                              defaultMode="symbolic"
+                              allowToggle={true}
+                              showBothModes={false}
+                            />
+                          </div>
+                        ) : (
+                          <SmartMathInput
+                            value={inputs[variable.symbol] || ""}
+                            onChange={(value, parsed) => handleInputChange(variable.symbol, value, parsed)}
+                            label={variable.name}
+                            unit={variable.unit}
+                            showPreview={true}
+                            showSuggestions={false}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Results Summary */}
+                {Object.keys(results).length > 0 && (
+                  <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-600">
+                    <h4 className="text-sm font-semibold text-green-800 dark:text-green-200 mb-2">
+                      ✨ Results computed in exact symbolic form
+                    </h4>
+                    <div className="text-sm text-green-700 dark:text-green-300">
+                      {Object.keys(results).length} variable{Object.keys(results).length !== 1 ? 's' : ''} solved. 
+                      Click the toggle button next to each result to switch between exact and decimal forms.
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        equation={equation}
+      />
+    </>
   );
 }

@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { InlineMath } from 'react-katex';
 import { InputParser } from "@/lib/inputParser";
 import { ExactNumber } from "@/types/exactNumber";
+import { useSettings } from "@/lib/contexts/SettingsContext";
+import { NumberFormatter } from "@/lib/utils/numberFormatter";
 
 interface SmartMathInputProps {
   value: string;
@@ -29,6 +31,7 @@ export default function SmartMathInput({
   const [focused, setFocused] = useState(false);
   const [parseResult, setParseResult] = useState<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { settings } = useSettings();
 
   // Only update parse result when value changes, don't call onChange here
   useEffect(() => {
@@ -68,6 +71,13 @@ export default function SmartMathInput({
     return "text-red-600 dark:text-red-400";
   };
 
+  const getFormattedDecimal = () => {
+    if (parseResult?.isValid && parseResult.value.type !== 'integer') {
+      return NumberFormatter.formatForDisplay(parseResult.value.decimal, settings);
+    }
+    return null;
+  };
+
   return (
     <div className={`space-y-2 ${className}`}>
       {label && (
@@ -99,16 +109,31 @@ export default function SmartMathInput({
       {showPreview && value.trim() && (
         <div className="space-y-1">
           {parseResult?.isValid ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                Preview:
-              </span>
-              <div className={`text-sm ${getPreviewClass()}`}>
-                <InlineMath math={parseResult.value.latex} />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                  Symbolic:
+                </span>
+                <div className={`text-sm ${getPreviewClass()}`}>
+                  <InlineMath math={parseResult.value.latex} />
+                </div>
+                <span className="text-xs text-gray-400 dark:text-gray-500">
+                  ({parseResult.detectedFormat})
+                </span>
               </div>
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                ({parseResult.detectedFormat})
-              </span>
+              {getFormattedDecimal() && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    Decimal:
+                  </span>
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                    {getFormattedDecimal()}
+                  </div>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                    ({settings.number_format === 'decimal_places' ? `${settings.decimal_places} dp` : `${settings.significant_figures} sf`})
+                  </span>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex items-center gap-2">

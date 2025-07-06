@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { InlineMath } from 'react-katex';
 import { ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
 import { ExactNumber } from '@/types/exactNumber';
+import { useSettings } from '@/lib/contexts/SettingsContext';
+import { NumberFormatter } from '@/lib/utils/numberFormatter';
 
 interface ToggleableResultProps {
   result: ExactNumber;
@@ -15,12 +17,22 @@ interface ToggleableResultProps {
 
 export default function ToggleableResult({
   result,
-  defaultMode = 'symbolic',
+  defaultMode,
   allowToggle = true,
   showBothModes = false,
   className = ""
 }: ToggleableResultProps) {
-  const [currentMode, setCurrentMode] = useState<'symbolic' | 'decimal'>(defaultMode);
+  const { settings } = useSettings();
+  const [currentMode, setCurrentMode] = useState<'symbolic' | 'decimal'>(
+    defaultMode || settings.default_result_mode === 'both' ? 'symbolic' : settings.default_result_mode
+  );
+
+  // Update mode when settings change
+  useEffect(() => {
+    if (!defaultMode && settings.default_result_mode !== 'both') {
+      setCurrentMode(settings.default_result_mode);
+    }
+  }, [settings.default_result_mode, defaultMode]);
 
   const toggleMode = () => {
     if (allowToggle) {
@@ -28,30 +40,19 @@ export default function ToggleableResult({
     }
   };
 
-  const formatDecimalForLatex = (decimal: number): string => {
-    // Format decimal numbers for LaTeX display
-    if (!isFinite(decimal)) return 'NaN';
-    
-    let precision = 8;
-    if (Math.abs(decimal) >= 1000) precision = 6;
-    else if (Math.abs(decimal) >= 100) precision = 7;
-    else if (Math.abs(decimal) >= 10) precision = 8;
-    else if (Math.abs(decimal) >= 1) precision = 9;
-    
-    const formatted = decimal.toPrecision(precision);
-    // Remove trailing zeros after decimal point
-    return parseFloat(formatted).toString();
-  };
-
   const getSymbolicDisplay = () => {
     return result.latex || result.decimal.toString();
   };
 
   const getDecimalDisplay = () => {
-    return formatDecimalForLatex(result.decimal);
+    // Always format decimal values according to user settings
+    return NumberFormatter.formatForLatex(result.decimal, settings);
   };
 
-  if (showBothModes) {
+  // Use settings to determine default behavior
+  const shouldShowBoth = showBothModes || settings.default_result_mode === 'both';
+
+  if (shouldShowBoth) {
     return (
       <div className={`space-y-2 ${className}`}>
         <div className="flex items-center gap-2">
@@ -71,7 +72,7 @@ export default function ToggleableResult({
   }
 
   const displayValue = currentMode === 'symbolic' ? getSymbolicDisplay() : getDecimalDisplay();
-  const canToggle = allowToggle && result.type !== 'decimal' && Math.abs(result.decimal) !== Math.abs(parseFloat(result.latex || '0'));
+  const canToggle = allowToggle && result.type !== 'decimal';
 
   return (
     <div className={`flex items-center gap-3 ${className}`}>
