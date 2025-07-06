@@ -24,7 +24,7 @@
 
 /* Dark mode KaTeX styling */
 .dark .katex {
-  color: #a5f3fc !important; /* cyan-200 */
+  color: #ffffff !important; /* white */
 }
 
 .dark .katex .mord,
@@ -34,15 +34,38 @@
 .dark .katex .mopen,
 .dark .katex .mclose,
 .dark .katex .mpunct {
-  color: #a5f3fc !important; /* cyan-200 */
+  color: #ffffff !important; /* white */
 }
 
 .dark .katex .mfrac .frac-line {
-  border-bottom-color: #a5f3fc !important; /* cyan-200 */
+  border-bottom-color: #ffffff !important; /* white */
 }
 
 .dark .katex .sqrt .sqrt-line {
-  border-top-color: #a5f3fc !important; /* cyan-200 */
+  border-top-color: #ffffff !important; /* white */
+}
+
+/* Light mode KaTeX styling */
+.katex {
+  color: #000000 !important; /* black */
+}
+
+.katex .mord,
+.katex .mop,
+.katex .mbin,
+.katex .mrel,
+.katex .mopen,
+.katex .mclose,
+.katex .mpunct {
+  color: #000000 !important; /* black */
+}
+
+.katex .mfrac .frac-line {
+  border-bottom-color: #000000 !important; /* black */
+}
+
+.katex .sqrt .sqrt-line {
+  border-top-color: #000000 !important; /* black */
 }
 
 body {
