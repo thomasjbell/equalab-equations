@@ -240,9 +240,9 @@ export default function Navbar() {
                           "User"}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {user.email?.length > 20
+                        {user.email && user.email.length > 20
                           ? `${user.email.substring(0, 20)}...`
-                          : user.email}
+                          : user.email || "No email"}
                       </div>
                     </div>
                     <motion.div
@@ -284,7 +284,7 @@ export default function Navbar() {
                                 {user.user_metadata?.name || "User"}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                {user.email}
+                                {user.email || "No email"}
                               </p>
                             </div>
                           </div>
