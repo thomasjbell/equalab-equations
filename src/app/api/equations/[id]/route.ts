@@ -4,10 +4,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const cookieStore = cookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  
+  const { id } = await context.params;
   
   const { data, error } = await supabase
     .from('equations')
@@ -15,7 +17,7 @@ export async function GET(
       *,
       profiles:author_id (name, id)
     `)
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('is_public', true)
     .single();
 
@@ -28,7 +30,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const cookieStore = cookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
@@ -39,13 +41,15 @@ export async function PUT(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { id } = await context.params;
+
   try {
     const body = await request.json();
     
     const { data, error } = await supabase
       .from('equations')
       .update(body)
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('author_id', user.id)
       .select()
       .single();
@@ -62,7 +66,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const cookieStore = cookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
@@ -73,10 +77,12 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { id } = await context.params;
+
   const { error } = await supabase
     .from('equations')
     .delete()
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('author_id', user.id);
 
   if (error) {
