@@ -63,7 +63,7 @@ export default function ShareModal({ isOpen, onClose, equation }: ShareModalProp
   };
 
   const shareViaNative = async () => {
-    if (navigator.share) {
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
       try {
         await navigator.share({
           title: `EquaLab: ${equation.name}`,
@@ -75,6 +75,9 @@ export default function ShareModal({ isOpen, onClose, equation }: ShareModalProp
       }
     }
   };
+
+  // Check if native share is available
+  const isNativeShareAvailable = typeof navigator !== 'undefined' && 'share' in navigator;
 
   // Generate QR code URL (using a free QR code service)
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareUrl)}`;
@@ -268,7 +271,7 @@ export default function ShareModal({ isOpen, onClose, equation }: ShareModalProp
             </motion.div>
 
             {/* Native Share API (Mobile) */}
-            {typeof navigator !== 'undefined' && navigator.share && (
+            {isNativeShareAvailable && (
               <motion.div className="mb-6" variants={itemVariants}>
                 <motion.button
                   onClick={shareViaNative}
