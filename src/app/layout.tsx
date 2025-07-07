@@ -8,8 +8,24 @@ import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: "EquaLab Equations",
-  description: "Interactive equation solver and calculator",
+  title: "EquaLab Equations - Mathematical Equation Solver",
+  description: "Interactive equation solver and calculator with exact symbolic computation",
+  keywords: "equations, math, calculator, symbolic computation, physics, engineering",
+  authors: [{ name: "EquaLab" }],
+  creator: "EquaLab",
+  publisher: "EquaLab",
+  applicationName: "EquaLab Equations",
+  metadataBase: new URL('https://equations.equalab.uk'),
+  openGraph: {
+    title: "EquaLab Equations",
+    description: "Interactive equation solver and calculator",
+    siteName: "EquaLab Equations",
+    url: "https://equations.equalab.uk",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://equations.equalab.uk",
+  },
 };
 
 export default function RootLayout({

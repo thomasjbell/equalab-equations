@@ -12,5 +12,7 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  return NextResponse.redirect(requestUrl.origin);
+  // Redirect to the correct origin
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || requestUrl.origin;
+  return NextResponse.redirect(origin);
 }

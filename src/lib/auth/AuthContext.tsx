@@ -64,14 +64,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    return { error };
-  };
+  // Get the current origin or use environment variable
+  const redirectTo = typeof window !== 'undefined' 
+    ? `${window.location.origin}/auth/callback`
+    : `${process.env.NEXT_PUBLIC_SITE_URL || 'https://equations.equalab.uk'}/auth/callback`;
+
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: redirectTo,
+    },
+  });
+  return { error };
+};
 
   return (
     <AuthContext.Provider
