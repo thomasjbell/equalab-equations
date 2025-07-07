@@ -206,32 +206,32 @@ export default function Navbar() {
           </motion.div>
 
           {/* Right: Settings + Account Area */}
-<motion.div variants={accountVariants} className="flex-shrink-0">
-  <div className="flex items-center gap-3">
-    {/* Settings Icon - Always visible */}
-    <Link
-      href="/settings"
-      className="inline-flex items-center justify-center p-2.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
-      title="Settings"
-    >
-      <motion.div
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        transition={{ type: "spring", stiffness: 400, damping: 10 }}
-        className="flex items-center justify-center"
-      >
-        <Settings className="w-5 h-5" />
-      </motion.div>
-    </Link>
+          <motion.div variants={accountVariants} className="flex-shrink-0">
+            <div className="flex items-center gap-3">
+              {/* Settings Icon - Always visible */}
+              <Link
+                href="/settings"
+                className="inline-flex items-center justify-center p-2.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
+                title="Settings"
+              >
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  className="flex items-center justify-center"
+                >
+                  <Settings className="w-5 h-5" />
+                </motion.div>
+              </Link>
 
-    {/* User Section */}
-    {loading ? (
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        className="w-8 h-8 border-2 border-gray-300 border-t-cyan-600 rounded-full"
-      />
-    ) : user ? (
+              {/* User Section */}
+              {loading ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="w-8 h-8 border-2 border-gray-300 border-t-cyan-600 rounded-full"
+                />
+              ) : user ? (
                 <div className="relative" ref={dropdownRef}>
                   <motion.button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -251,7 +251,7 @@ export default function Navbar() {
                     >
                       <UserIcon className="w-4 h-4 text-white" />
                     </motion.div>
-                    <div className="hidden sm:block text-left">
+                    <div className="hidden ml-2 sm:block text-left">
                       <div className="text-sm font-semibold text-gray-900 dark:text-white">
                         {user.user_metadata?.name ||
                           user.email?.split("@")[0] ||
