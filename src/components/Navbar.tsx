@@ -235,7 +235,7 @@ export default function Navbar() {
                 <div className="relative" ref={dropdownRef}>
                   <motion.button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center space-x-3 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    className="flex items-center space-x-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                     variants={buttonVariants}
                     whileHover="hover"
                     whileTap="tap"
@@ -251,7 +251,7 @@ export default function Navbar() {
                     >
                       <UserIcon className="w-4 h-4 text-white" />
                     </motion.div>
-                    <div className="hidden ml-2 sm:block text-left">
+                    <div className="hidden sm:block text-left">
                       <div className="text-sm font-semibold text-gray-900 dark:text-white">
                         {user.user_metadata?.name ||
                           user.email?.split("@")[0] ||
