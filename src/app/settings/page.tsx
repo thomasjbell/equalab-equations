@@ -15,15 +15,24 @@ import {
   ClockIcon,
   CloudIcon,
   CloudArrowUpIcon,
+  HeartIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { useSettings } from "@/lib/contexts/SettingsContext";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { createClient } from "@/lib/supabase/client";
 
 export default function SettingsPage() {
   const { settings, updateSetting, resetSettings, loading, saving, lastSaved } =
     useSettings();
   const { user } = useAuth();
   const [resetConfirm, setResetConfirm] = useState(false);
+  const [deleteFavoritesConfirm, setDeleteFavoritesConfirm] = useState(false);
+  const [deletingFavorites, setDeletingFavorites] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+
+  const supabase = createClient();
 
   const handleReset = async () => {
     if (!resetConfirm) {
@@ -34,6 +43,45 @@ export default function SettingsPage() {
 
     await resetSettings();
     setResetConfirm(false);
+  };
+
+  const handleDeleteAllFavorites = async () => {
+    if (!user) return;
+
+    if (!deleteFavoritesConfirm) {
+      setDeleteFavoritesConfirm(true);
+      setTimeout(() => setDeleteFavoritesConfirm(false), 3000);
+      return;
+    }
+
+    setDeletingFavorites(true);
+    setDeleteError(null);
+    setDeleteSuccess(false);
+
+    try {
+      const { error } = await supabase
+        .from('user_favorites')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      setDeleteSuccess(true);
+      setDeleteFavoritesConfirm(false);
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => setDeleteSuccess(false), 3000);
+    } catch (error) {
+      console.error('Error deleting favorites:', error);
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete favorites');
+      
+      // Hide error message after 5 seconds
+      setTimeout(() => setDeleteError(null), 5000);
+    } finally {
+      setDeletingFavorites(false);
+    }
   };
 
   const containerVariants = {
@@ -237,81 +285,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
-<h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center mt-32">Coming Soon</h1>
-              {/* <div className="space-y-8">
-                // Theme Selection 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
-                    Color Theme
-                  </label>
-                  <div className="grid grid-cols-3 gap-4">
-                    {themeOptions.map((option) => {
-                      const Icon = option.icon;
-                      return (
-                        <motion.button
-                          key={option.value}
-                          onClick={() =>
-                            updateSetting("theme", option.value as any)
-                          }
-                          className={`p-4 rounded-2xl border-2 transition-all ${
-                            settings.theme === option.value
-                              ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20 shadow-lg"
-                              : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:shadow-md"
-                          }`}
-                          variants={buttonVariants}
-                          whileHover="hover"
-                          whileTap="tap"
-                        >
-                          <Icon className="w-8 h-8 mx-auto mb-3 text-gray-600 dark:text-gray-400" />
-                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {option.label}
-                          </div>
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                // Animations Toggle 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      Enable Animations
-                    </label>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Smooth transitions and micro-interactions
-                    </p>
-                  </div>
-                  <motion.button
-                    onClick={() =>
-                      updateSetting(
-                        "animations_enabled",
-                        !settings.animations_enabled
-                      )
-                    }
-                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                      settings.animations_enabled
-                        ? "bg-cyan-600"
-                        : "bg-gray-300 dark:bg-gray-600"
-                    }`}
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                  >
-                    <motion.span
-                      className="inline-block h-5 w-5 transform rounded-full bg-white shadow-lg"
-                      animate={{
-                        x: settings.animations_enabled ? 24 : 4,
-                      }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 30,
-                      }}
-                    />
-                  </motion.button>
-                </div>
-              </div> */}
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center mt-32">Coming Soon</h1>
             </motion.div>
 
             {/* Number Display Settings */}
@@ -630,12 +604,13 @@ export default function SettingsPage() {
                     Data & Reset
                   </h2>
                   <p className="text-gray-600 dark:text-gray-400">
-                    Manage your preferences
+                    Manage your preferences and data
                   </p>
                 </div>
               </div>
 
               <div className="space-y-6">
+                {/* Reset Settings */}
                 <motion.div
                   className="p-6 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-2xl border border-yellow-200 dark:border-yellow-800"
                   whileHover={{ scale: 1.02 }}
@@ -684,13 +659,104 @@ export default function SettingsPage() {
                   </motion.button>
                 </motion.div>
 
+                {/* Delete All Favorites - Only show for logged in users */}
+                {user && (
+                  <motion.div
+                    className="p-6 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-2xl border border-red-200 dark:border-red-800"
+                    whileHover={{ scale: 1.02 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.9 }}
+                  >
+                    <h3 className="font-bold text-red-800 dark:text-red-200 mb-3 flex items-center gap-2">
+                      <HeartIcon className="w-5 h-5" />
+                      Delete All Favorites
+                    </h3>
+                    <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+                      This will permanently remove all equations from your favorites list. 
+                      This action cannot be undone.
+                    </p>
+
+                    {/* Error Message */}
+                    <AnimatePresence>
+                      {deleteError && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg"
+                        >
+                          <p className="text-sm text-red-800 dark:text-red-200">
+                            Error: {deleteError}
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Success Message */}
+                    <AnimatePresence>
+                      {deleteSuccess && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="mb-4 p-3 bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700 rounded-lg"
+                        >
+                          <p className="text-sm text-green-800 dark:text-green-200">
+                            ✓ All favorites have been successfully deleted
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <motion.button
+                      onClick={handleDeleteAllFavorites}
+                      disabled={deletingFavorites || saving}
+                      className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                        deleteFavoritesConfirm
+                          ? "bg-red-600 text-white hover:bg-red-700 shadow-lg"
+                          : "bg-red-500 text-white hover:bg-red-600 shadow-lg"
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      variants={buttonVariants}
+                      whileHover={!deletingFavorites && !saving ? "hover" : {}}
+                      whileTap={!deletingFavorites && !saving ? "tap" : {}}
+                    >
+                      {deletingFavorites ? (
+                        <div className="flex items-center gap-2">
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{
+                              duration: 1,
+                              repeat: Infinity,
+                              ease: "linear",
+                            }}
+                            className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                          />
+                          Deleting Favorites...
+                        </div>
+                      ) : deleteFavoritesConfirm ? (
+                        <div className="flex items-center gap-2">
+                          <TrashIcon className="w-5 h-5" />
+                          Click Again to Confirm
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <HeartIcon className="w-5 h-5" />
+                          Delete All Favorites
+                        </div>
+                      )}
+                    </motion.button>
+                  </motion.div>
+                )}
+
+                {/* Cloud Sync Status */}
                 {user && (
                   <motion.div
                     className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl border border-green-200 dark:border-green-800"
                     whileHover={{ scale: 1.02 }}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8 }}
+                    transition={{ delay: 1.0 }}
                   >
                     <h3 className="font-bold text-green-800 dark:text-green-200 mb-3 flex items-center gap-2">
                       <CloudArrowUpIcon className="w-5 h-5" />

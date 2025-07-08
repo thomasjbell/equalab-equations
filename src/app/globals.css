@@ -22,6 +22,33 @@
   margin: 0.5em 0;
 }
 
+/* Auto-scaling equation container - centered */
+.equation-container-auto-scale {
+  width: 100%;
+  overflow: visible;
+  text-align: center;
+}
+
+.equation-container-auto-scale .katex-display {
+  margin: 0;
+  text-align: center;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+/* Set base equation size - this will be the maximum size */
+.equation-container-auto-scale .katex {
+  font-size: 2rem; /* This is your maximum size */
+  line-height: 1.2;
+}
+
+/* Ensure equations scale smoothly and stay centered */
+.equation-container-auto-scale .katex-display > .katex {
+  white-space: nowrap;
+  display: inline-block;
+  max-width: 100%;
+}
+
 /* Dark mode KaTeX styling */
 .dark .katex {
   color: #ffffff !important; /* white */
@@ -126,6 +153,7 @@ html {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
+
 /* Custom slider styling */
 input[type="range"].slider {
   -webkit-appearance: none;
@@ -186,4 +214,12 @@ input[type="range"].slider::-moz-range-thumb {
 input[type="range"].slider::-moz-range-thumb:hover {
   transform: scale(1.1);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Line clamp utility for text truncation */
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }

@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import EnhancedEquationCard from "./EnhancedEquationCard";
 import SearchBar from "./SearchBar";
 import SortDropdown from "./SortDropdown";
-import { ListBulletIcon, Squares2X2Icon, CalculatorIcon } from "@heroicons/react/24/outline";
+import { ListBulletIcon, Squares2X2Icon, CalculatorIcon, Cog8ToothIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -123,6 +123,10 @@ export default function EnhancedEquationGrid() {
 
   const toggleDisplayMode = () => {
     setDisplayMode((prevMode) => (prevMode === "list" ? "grid" : "list"));
+    // Clear expanded cards when switching modes
+    if (displayMode === "list") {
+      setExpandedCards(new Set());
+    }
   };
 
   const handleTagSelect = (tag: string | null) => {
@@ -207,181 +211,195 @@ export default function EnhancedEquationGrid() {
   }
 
   return (
-  <div className="space-y-12">
-    {/* Header */}
-    <motion.div 
-      className="text-center"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-    >
-      <div className="flex justify-center mb-6">
-        <motion.div
-          className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl"
-          whileHover={{ scale: 1.05, rotate: 5 }}
-          transition={{ type: "spring", stiffness: 300, damping: 10 }}
-        >
-          <CalculatorIcon className="w-8 h-8 text-white" />
-        </motion.div>
-      </div>
-      <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-        <span className="bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 text-transparent bg-clip-text">
-          Equation Library
-        </span>
-      </h1>
-      <p className="text-xl text-gray-600 dark:text-gray-400 mb-4 max-w-3xl mx-auto">
-        Discover powerful mathematical tools with exact symbolic computation
-      </p>
-      <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-        <motion.div 
-          className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
-          whileHover={{ scale: 1.05 }}
-        >
-          <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">1/2</code>
-          <span>Fractions</span>
-        </motion.div>
-        <motion.div 
-          className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
-          whileHover={{ scale: 1.05 }}
-        >
-          <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">sqrt(2)</code>
-          <span>Surds</span>
-        </motion.div>
-        <motion.div 
-          className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
-          whileHover={{ scale: 1.05 }}
-        >
-          <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">3*pi</code>
-          <span>Expressions</span>
-        </motion.div>
-      </div>
-    </motion.div>
-
-    {/* Controls */}
-    <motion.div 
-      className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-6"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.2 }}
-    >
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-row flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-0">
-            <SearchBar
-              value={searchTerm}
-              onChange={setSearchTerm}
-              placeholder="Search equations, categories, or descriptions..."
-            />
-          </div>
-          <div className="flex items-center gap-4">
-            <SortDropdown value={sortBy} onChange={setSortBy} />
-            <motion.button
-              onClick={toggleDisplayMode}
-              className="p-3 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {displayMode === "list" ? (
-                <Squares2X2Icon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
-              ) : (
-                <ListBulletIcon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
-              )}
-            </motion.button>
-          </div>
-        </div>
-
-        {/* Tag List */}
-        <div className="flex flex-wrap gap-2">
-          <motion.button
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              selectedTag === null
-                ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-            }`}
-            onClick={() => handleTagSelect(null)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+    <div className="space-y-12">
+      {/* Header */}
+      <motion.div 
+        className="text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="flex justify-center mb-6">
+          <motion.div
+            className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl"
+            whileHover={{ scale: 1.05, rotate: 5 }}
+            transition={{ type: "spring", stiffness: 300, damping: 10 }}
           >
-            All
-          </motion.button>
-          {uniqueCategories.map((tag) => (
+            <CalculatorIcon className="w-8 h-8 text-white" />
+          </motion.div>
+        </div>
+        <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+          <span className="bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 text-transparent bg-clip-text">
+            Equation Library
+          </span>
+        </h1>
+        <p className="text-xl text-gray-600 dark:text-gray-400 mb-4 max-w-3xl mx-auto">
+          Discover powerful mathematical tools with exact symbolic computation
+        </p>
+        <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+          <motion.div 
+            className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
+            whileHover={{ scale: 1.05 }}
+          >
+            <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">1/2</code>
+            <span>Fractions</span>
+          </motion.div>
+          <motion.div 
+            className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
+            whileHover={{ scale: 1.05 }}
+          >
+            <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">sqrt(2)</code>
+            <span>Surds</span>
+          </motion.div>
+          <motion.div 
+            className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
+            whileHover={{ scale: 1.05 }}
+          >
+            <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">3*pi</code>
+            <span>Expressions</span>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Controls */}
+      <motion.div 
+        className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+      >
+        <div className="flex flex-col gap-6">
+          {/* Mobile: Stack vertically, Desktop: Side by side */}
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            {/* Search bar takes full width on mobile, flex-1 on desktop */}
+            <div className="w-full md:flex-1">
+              <SearchBar
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="Search equations, categories, or descriptions..."
+              />
+            </div>
+            
+            {/* Controls row */}
+            <div className="flex items-center justify-between md:justify-end gap-4">
+              <div className="flex-1 md:flex-none">
+                <SortDropdown value={sortBy} onChange={setSortBy} />
+              </div>
+              
+              {/* Display mode toggle - hidden on mobile */}
+              <motion.button
+                onClick={toggleDisplayMode}
+                className="hidden md:flex p-3 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title={displayMode === "list" ? "Switch to Grid View" : "Switch to List View"}
+              >
+                {displayMode === "list" ? (
+                  <Squares2X2Icon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+                ) : (
+                  <ListBulletIcon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+                )}
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Tag List */}
+          <div className="flex flex-wrap gap-2">
             <motion.button
-              key={tag}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                selectedTag === tag
+                selectedTag === null
                   ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg"
                   : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
               }`}
-              onClick={() => handleTagSelect(tag)}
+              onClick={() => handleTagSelect(null)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              {tag}
+              All
             </motion.button>
-          ))}
+            {uniqueCategories.map((tag) => (
+              <motion.button
+                key={tag}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  selectedTag === tag
+                    ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg"
+                    : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                }`}
+                onClick={() => handleTagSelect(tag)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {tag}
+              </motion.button>
+            ))}
+          </div>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
 
-    {/* Results Count */}
-    <motion.div 
-      className="text-center"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6, delay: 0.4 }}
-    >
-      <p className="text-gray-600 dark:text-gray-400">
-        {filteredAndSortedEquations.length} equation
-        {filteredAndSortedEquations.length !== 1 ? "s" : ""} found
-        {selectedTag && ` in ${selectedTag}`}
-      </p>
-    </motion.div>
-
-    {/* Equation Cards */}
-    <motion.div
-      className={
-        displayMode === "list"
-          ? "space-y-6"
-          : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-      }
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6, delay: 0.6 }}
-    >
-      {filteredAndSortedEquations.map((equation, index) => (
-        <motion.div 
-          key={equation.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: index * 0.1 }}
-        >
-          <EnhancedEquationCard
-            equation={equation}
-            isExpanded={expandedCards.has(equation.id)}
-            onToggle={() => handleCardToggle(equation.id)}
-            isFavorited={equation.user_favorites?.length > 0}
-            onFavoriteToggle={(isFavorited) => {
-              handleFavoriteToggle(equation.id, isFavorited);
-            }}
-            author={equation.profiles?.name}
-            showFavoriteButton={!!user}
-          />
-        </motion.div>
-      ))}
-    </motion.div>
-
-    {filteredAndSortedEquations.length === 0 && (
+      {/* Results Count */}
       <motion.div 
-        className="text-center py-20"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        className="text-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.4 }}
       >
-        <p className="text-gray-500 text-xl dark:text-gray-400">
-          No equations found matching your search
-          {selectedTag && ` in category "${selectedTag}"`}.
+        <p className="text-gray-600 dark:text-gray-400">
+          {filteredAndSortedEquations.length} equation
+          {filteredAndSortedEquations.length !== 1 ? "s" : ""} found
+          {selectedTag && ` in ${selectedTag}`}
+        </p>
+        {/* Display mode indicator on mobile */}
+        <p className="text-sm text-gray-500 dark:text-gray-500 mt-1 md:hidden">
+          Viewing in {displayMode} mode
         </p>
       </motion.div>
-    )}
-  </div>
-);
+
+      {/* Equation Cards */}
+      <motion.div
+        className={
+          displayMode === "list"
+            ? "space-y-6"
+            : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        }
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.6 }}
+      >
+        {filteredAndSortedEquations.map((equation, index) => (
+          <motion.div 
+            key={equation.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: index * 0.1 }}
+          >
+            <EnhancedEquationCard
+              equation={equation}
+              isExpanded={expandedCards.has(equation.id)}
+              onToggle={() => handleCardToggle(equation.id)}
+              isFavorited={equation.user_favorites?.length > 0}
+              onFavoriteToggle={(isFavorited) => {
+                handleFavoriteToggle(equation.id, isFavorited);
+              }}
+              author={equation.profiles?.name}
+              showFavoriteButton={!!user}
+              displayMode={displayMode}
+            />
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {filteredAndSortedEquations.length === 0 && (
+        <motion.div 
+          className="text-center py-20"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <p className="text-gray-500 text-xl dark:text-gray-400">
+            No equations found matching your search
+            {selectedTag && ` in category "${selectedTag}"`}.
+          </p>
+        </motion.div>
+      )}
+    </div>
+  );
 }
