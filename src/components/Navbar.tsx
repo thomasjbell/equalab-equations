@@ -235,7 +235,7 @@ export default function Navbar() {
                 <div className="relative" ref={dropdownRef}>
                   <motion.button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center space-x-1 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                     variants={buttonVariants}
                     whileHover="hover"
                     whileTap="tap"
