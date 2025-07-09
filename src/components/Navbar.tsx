@@ -179,7 +179,7 @@ export default function Navbar() {
           <motion.div variants={logoVariants} className="flex-shrink-0">
             <motion.a
               href="/"
-              className="flex items-center space-x-3 group"
+              className="flex items-center space-x-2 group"
               whileHover="hover"
               variants={logoVariants}
             >
@@ -187,7 +187,7 @@ export default function Navbar() {
                 whileHover={{ rotate: 5 }}
                 transition={{ type: "spring", stiffness: 300, damping: 10 }}
               >
-                <LittleLogo className="w-10 h-10" />
+                <LittleLogo className="w-12 h-12"/>
               </motion.div>
               <div>
                 <motion.h1
@@ -310,7 +310,7 @@ export default function Navbar() {
 
                         {/* Menu Items */}
                         <div className="py-2">
-                          <DropdownMenuItem href="/favorites" icon={Heart}>
+                          <DropdownMenuItem href="/favourites" icon={Heart}>
                             My Favourites
                           </DropdownMenuItem>
 

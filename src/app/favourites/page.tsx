@@ -94,8 +94,8 @@ export default function FavoritesPage() {
 
       setEquations(transformedEquations);
     } catch (err) {
-      console.error('Error fetching favorite equations:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch favorite equations');
+      console.error('Error fetching favourite equations:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch favourite equations');
     } finally {
       setLoading(false);
     }
@@ -185,11 +185,11 @@ export default function FavoritesPage() {
             </motion.div>
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
               <span className="bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 text-transparent bg-clip-text">
-                Sign In to View Favorites
+                Sign In to View Favourites
               </span>
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-              Create an account to save your favorite equations and access them from any device.
+              Create an account to save your favourite equations and access them from any device.
             </p>
             <motion.div
               whileHover={{ scale: 1.05 }}
@@ -259,7 +259,7 @@ export default function FavoritesPage() {
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
               <span className="bg-gradient-to-r from-red-500 to-pink-600 dark:from-red-400 dark:to-pink-500 text-transparent bg-clip-text">
-                My Favorite Equations
+                My Favourite Equations
               </span>
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
@@ -280,7 +280,7 @@ export default function FavoritesPage() {
                 <HeartIcon className="h-12 w-12 text-white" />
               </motion.div>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-                No Favorite Equations Yet
+                No Favourite Equations Yet
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
                 Start building your collection by clicking the heart icon on any equation in the library.
@@ -372,7 +372,7 @@ export default function FavoritesPage() {
                 variants={cardVariants}
               >
                 <p className="text-gray-600 dark:text-gray-400">
-                  {filteredAndSortedEquations.length} favorite equation
+                  {filteredAndSortedEquations.length} favourite equation
                   {filteredAndSortedEquations.length !== 1 ? "s" : ""}
                   {selectedTag && ` in ${selectedTag}`}
                 </p>
@@ -417,7 +417,7 @@ export default function FavoritesPage() {
                   variants={cardVariants}
                 >
                   <p className="text-gray-500 text-lg dark:text-gray-400">
-                    No favorite equations found matching your search
+                    No favourite equations found matching your search
                     {selectedTag && ` in category "${selectedTag}"`}.
                   </p>
                 </motion.div>

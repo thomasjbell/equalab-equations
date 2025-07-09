@@ -17,20 +17,30 @@ import {
   CloudArrowUpIcon,
   HeartIcon,
   TrashIcon,
+  UserIcon,
+  ShieldExclamationIcon,
+  DocumentArrowDownIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { useSettings } from "@/lib/contexts/SettingsContext";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
   const { settings, updateSetting, resetSettings, loading, saving, lastSaved } =
     useSettings();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const router = useRouter();
   const [resetConfirm, setResetConfirm] = useState(false);
   const [deleteFavoritesConfirm, setDeleteFavoritesConfirm] = useState(false);
+  const [deleteAccountConfirm, setDeleteAccountConfirm] = useState(false);
   const [deletingFavorites, setDeletingFavorites] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [exportingData, setExportingData] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [accountDeleteError, setAccountDeleteError] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -71,16 +81,83 @@ export default function SettingsPage() {
       setDeleteSuccess(true);
       setDeleteFavoritesConfirm(false);
       
-      // Hide success message after 3 seconds
       setTimeout(() => setDeleteSuccess(false), 3000);
     } catch (error) {
       console.error('Error deleting favorites:', error);
       setDeleteError(error instanceof Error ? error.message : 'Failed to delete favorites');
-      
-      // Hide error message after 5 seconds
       setTimeout(() => setDeleteError(null), 5000);
     } finally {
       setDeletingFavorites(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    if (!user) return;
+
+    setExportingData(true);
+    
+    try {
+      const response = await fetch('/api/account/export');
+      
+      if (!response.ok) {
+        throw new Error('Failed to export data');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `equalab-data-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      alert('Failed to export data. Please try again.');
+    } finally {
+      setExportingData(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+
+    if (!deleteAccountConfirm) {
+      setDeleteAccountConfirm(true);
+      setTimeout(() => setDeleteAccountConfirm(false), 5000);
+      return;
+    }
+
+    setDeletingAccount(true);
+    setAccountDeleteError(null);
+
+    try {
+      const response = await fetch('/api/account/delete', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ confirmDelete: true }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete account');
+      }
+
+      // Account deleted successfully - sign out and redirect
+      await signOut();
+      router.push('/');
+      
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      setAccountDeleteError(error instanceof Error ? error.message : 'Failed to delete account');
+      setTimeout(() => setAccountDeleteError(null), 5000);
+    } finally {
+      setDeletingAccount(false);
+      setDeleteAccountConfirm(false);
     }
   };
 
@@ -115,12 +192,6 @@ export default function SettingsPage() {
     },
     tap: { scale: 0.98 },
   };
-
-  const themeOptions = [
-    { value: "light", label: "Light", icon: SunIcon },
-    { value: "dark", label: "Dark", icon: MoonIcon },
-    { value: "system", label: "System", icon: ComputerDesktopIcon },
-  ];
 
   const numberFormatOptions = [
     {
@@ -590,6 +661,78 @@ export default function SettingsPage() {
               </div>
             </motion.div>
 
+            {/* Account Management - Only show for logged in users */}
+            {user && (
+              <motion.div
+                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8"
+                variants={cardVariants}
+              >
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                    <UserIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      Account Management
+                    </h2>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Manage your account and data
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Account Info */}
+                  <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl border border-blue-200 dark:border-blue-800">
+                    <h3 className="font-bold text-blue-800 dark:text-blue-200 mb-3 flex items-center gap-2">
+                      <UserIcon className="w-5 h-5" />
+                      Account Information
+                    </h3>
+                    <div className="space-y-2 text-sm text-blue-700 dark:text-blue-300">
+                      <p><strong>Email:</strong> {user.email}</p>
+                      <p><strong>Account created:</strong> {new Date(user.created_at || '').toLocaleDateString()}</p>
+                      <p><strong>Last sign in:</strong> {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'Unknown'}</p>
+                    </div>
+                  </div>
+
+                  {/* Export Data */}
+                  <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl border border-green-200 dark:border-green-800">
+                    <h3 className="font-bold text-green-800 dark:text-green-200 mb-3 flex items-center gap-2">
+                      <DocumentArrowDownIcon className="w-5 h-5" />
+                      Export Your Data
+                    </h3>
+                    <p className="text-sm text-green-700 dark:text-green-300 mb-4">
+                      Download a copy of all your data including favorites, settings, and account information.
+                    </p>
+                    <motion.button
+                      onClick={handleExportData}
+                      disabled={exportingData}
+                      className="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      variants={buttonVariants}
+                      whileHover={!exportingData ? "hover" : {}}
+                      whileTap={!exportingData ? "tap" : {}}
+                    >
+                      {exportingData ? (
+                        <>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                          />
+                          Exporting...
+                        </>
+                      ) : (
+                        <>
+                          <DocumentArrowDownIcon className="w-5 h-5" />
+                          Export Data
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {/* Data & Reset */}
             <motion.div
               className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8"
@@ -749,6 +892,98 @@ export default function SettingsPage() {
                   </motion.div>
                 )}
 
+                {/* Delete Account - Only show for logged in users */}
+                {user && (
+                  <motion.div
+                    className="p-6 bg-gradient-to-r from-red-100 to-red-50 dark:from-red-900/40 dark:to-red-900/20 rounded-2xl border-2 border-red-300 dark:border-red-700"
+                    whileHover={{ scale: 1.02 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.0 }}
+                  >
+                    <h3 className="font-bold text-red-800 dark:text-red-200 mb-3 flex items-center gap-2">
+                      <ExclamationTriangleIcon className="w-5 h-5" />
+                      Delete Account
+                    </h3>
+                    <div className="space-y-3 text-sm text-red-700 dark:text-red-300 mb-4">
+                      <p className="font-semibold">⚠️ This action is permanent and cannot be undone!</p>
+                      <p>Deleting your account will:</p>
+                      <ul className="list-disc ml-6 space-y-1">
+                        <li>Permanently delete your account and profile</li>
+                        <li>Remove all your favorites</li>
+                        <li>Delete your settings and preferences</li>
+                        <li>Remove any equations you've created</li>
+                        <li>Sign you out of all devices</li>
+                      </ul>
+                      <p className="font-semibold">Consider exporting your data first if you want to keep a copy.</p>
+                    </div>
+
+                    {/* Error Message */}
+                    <AnimatePresence>
+                      {accountDeleteError && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="mb-4 p-3 bg-red-200 dark:bg-red-900/50 border border-red-400 dark:border-red-600 rounded-lg"
+                        >
+                          <p className="text-sm text-red-900 dark:text-red-200">
+                            Error: {accountDeleteError}
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <motion.button
+                      onClick={handleDeleteAccount}
+                      disabled={deletingAccount || saving}
+                      className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                        deleteAccountConfirm
+                          ? "bg-red-700 text-white hover:bg-red-800 shadow-lg animate-pulse"
+                          : "bg-red-600 text-white hover:bg-red-700 shadow-lg"
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      variants={buttonVariants}
+                      whileHover={!deletingAccount && !saving ? "hover" : {}}
+                      whileTap={!deletingAccount && !saving ? "tap" : {}}
+                    >
+                      {deletingAccount ? (
+                        <div className="flex items-center gap-2">
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{
+                              duration: 1,
+                              repeat: Infinity,
+                              ease: "linear",
+                            }}
+                            className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                          />
+                          Deleting Account...
+                        </div>
+                      ) : deleteAccountConfirm ? (
+                        <div className="flex items-center gap-2">
+                          <ShieldExclamationIcon className="w-5 h-5" />
+                          PERMANENTLY DELETE ACCOUNT
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <ExclamationTriangleIcon className="w-5 h-5" />
+                          Delete My Account
+                        </div>
+                      )}
+                    </motion.button>
+
+                    {deleteAccountConfirm && (
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-xs text-red-600 dark:text-red-400 mt-2 font-medium"
+                      >
+                        Click the button again within 5 seconds to confirm permanent deletion
+                      </motion.p>
+                    )}
+                  </motion.div>
+                )}
+
                 {/* Cloud Sync Status */}
                 {user && (
                   <motion.div
@@ -756,7 +991,7 @@ export default function SettingsPage() {
                     whileHover={{ scale: 1.02 }}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 1.0 }}
+                    transition={{ delay: 1.1 }}
                   >
                     <h3 className="font-bold text-green-800 dark:text-green-200 mb-3 flex items-center gap-2">
                       <CloudArrowUpIcon className="w-5 h-5" />

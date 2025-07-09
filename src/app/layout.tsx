@@ -28,6 +28,41 @@ export const metadata = {
   },
 };
 
+// Structured data for Google sitelinks searchbox
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "EquaLab Equations",
+  "alternateName": "EquaLab Mathematical Equation Solver",
+  "description": "Interactive equation solver and calculator with exact symbolic computation for mathematics, physics, and engineering",
+  "url": "https://equations.equalab.uk",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://equations.equalab.uk/?search={search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "EquaLab",
+    "url": "https://equalab.uk"
+  },
+  "mainEntity": {
+    "@type": "WebApplication",
+    "name": "EquaLab Equations",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Web Browser",
+    "description": "Mathematical equation solver with symbolic computation capabilities",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -43,6 +78,19 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+        
+        {/* Structured Data for Google Sitelinks Searchbox */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData),
+          }}
+        />
+        
+        {/* Additional meta tags for better SEO */}
+        <meta name="robots" content="index, follow" />
+        <meta name="googlebot" content="index, follow" />
+        <meta name="google-site-verification" content="your-verification-code" />
       </head>
       <body className={`dark:bg-gray-900 ${inter.className}`}>
         <AuthProvider>

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import EnhancedEquationCard from "./EnhancedEquationCard";
 import SearchBar from "./SearchBar";
 import SortDropdown from "./SortDropdown";
-import { ListBulletIcon, Squares2X2Icon, CalculatorIcon, Cog8ToothIcon } from "@heroicons/react/24/outline";
+import { ListBulletIcon, Squares2X2Icon, CalculatorIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -16,19 +17,62 @@ interface DatabaseEquationWithFavorites extends DatabaseEquation {
 }
 
 export default function EnhancedEquationGrid() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("name");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Initialize search term from URL params
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || "");
+  const [sortBy, setSortBy] = useState(searchParams.get('sort') || "name");
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [displayMode, setDisplayMode] = useState<"list" | "grid">("list");
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [equations, setEquations] = useState<DatabaseEquationWithFavorites[]>(
-    []
-  );
+  const [selectedTag, setSelectedTag] = useState<string | null>(searchParams.get('category') || null);
+  const [equations, setEquations] = useState<DatabaseEquationWithFavorites[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const { user } = useAuth();
   const supabase = createClient();
+
+  // Update URL when search parameters change
+  const updateURL = (newSearchTerm: string, newSortBy: string, newSelectedTag: string | null) => {
+    const params = new URLSearchParams();
+    
+    if (newSearchTerm) {
+      params.set('search', newSearchTerm);
+    }
+    
+    if (newSortBy && newSortBy !== 'name') {
+      params.set('sort', newSortBy);
+    }
+    
+    if (newSelectedTag) {
+      params.set('category', newSelectedTag);
+    }
+    
+    const queryString = params.toString();
+    const newUrl = queryString ? `?${queryString}` : '/';
+    
+    // Use replace to avoid cluttering browser history
+    router.replace(newUrl, { scroll: false });
+  };
+
+  // Handle search term changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    updateURL(value, sortBy, selectedTag);
+  };
+
+  // Handle sort changes
+  const handleSortChange = (value: string) => {
+    setSortBy(value);
+    updateURL(searchTerm, value, selectedTag);
+  };
+
+  // Handle tag selection
+  const handleTagSelect = (tag: string | null) => {
+    setSelectedTag(tag);
+    updateURL(searchTerm, sortBy, tag);
+  };
 
   const fetchEquations = async () => {
     try {
@@ -79,6 +123,17 @@ export default function EnhancedEquationGrid() {
     }
   };
 
+  // Initialize from URL params on mount
+  useEffect(() => {
+    const urlSearch = searchParams.get('search');
+    const urlSort = searchParams.get('sort');
+    const urlCategory = searchParams.get('category');
+    
+    if (urlSearch) setSearchTerm(urlSearch);
+    if (urlSort) setSortBy(urlSort);
+    if (urlCategory) setSelectedTag(urlCategory);
+  }, [searchParams]);
+
   useEffect(() => {
     fetchEquations();
   }, [user]);
@@ -89,7 +144,7 @@ export default function EnhancedEquationGrid() {
 
   const filteredAndSortedEquations = useMemo(() => {
     let filtered = equations.filter((equation) => {
-      const searchMatch =
+      const searchMatch = !searchTerm || 
         equation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         equation.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (equation.description &&
@@ -127,10 +182,6 @@ export default function EnhancedEquationGrid() {
     if (displayMode === "list") {
       setExpandedCards(new Set());
     }
-  };
-
-  const handleTagSelect = (tag: string | null) => {
-    setSelectedTag(tag);
   };
 
   const handleFavoriteToggle = async (
@@ -190,6 +241,23 @@ export default function EnhancedEquationGrid() {
     }
   };
 
+  // Generate page title based on search/filter state
+  const getPageTitle = () => {
+    if (searchTerm && selectedTag) {
+      return `"${searchTerm}" in ${selectedTag} - EquaLab Equations`;
+    } else if (searchTerm) {
+      return `"${searchTerm}" - Search Results - EquaLab Equations`;
+    } else if (selectedTag) {
+      return `${selectedTag} Equations - EquaLab Equations`;
+    }
+    return "EquaLab Equations - Mathematical Equation Solver";
+  };
+
+  // Update document title
+  useEffect(() => {
+    document.title = getPageTitle();
+  }, [searchTerm, selectedTag]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -228,37 +296,45 @@ export default function EnhancedEquationGrid() {
             <CalculatorIcon className="w-8 h-8 text-white" />
           </motion.div>
         </div>
+        
         <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
           <span className="bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 text-transparent bg-clip-text">
-            Equation Library
+            {searchTerm ? 'Search Results' : 'Equation Library'}
           </span>
         </h1>
+        
         <p className="text-xl text-gray-600 dark:text-gray-400 mb-4 max-w-3xl mx-auto">
-          Discover powerful mathematical tools with exact symbolic computation
+          {searchTerm 
+            ? `Showing results for "${searchTerm}"${selectedTag ? ` in ${selectedTag}` : ''}`
+            : 'Discover powerful mathematical tools with exact symbolic computation'
+          }
         </p>
-        <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-          <motion.div 
-            className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
-            whileHover={{ scale: 1.05 }}
-          >
-            <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">1/2</code>
-            <span>Fractions</span>
-          </motion.div>
-          <motion.div 
-            className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
-            whileHover={{ scale: 1.05 }}
-          >
-            <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">sqrt(2)</code>
-            <span>Surds</span>
-          </motion.div>
-          <motion.div 
-            className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
-            whileHover={{ scale: 1.05 }}
-          >
-            <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">3*pi</code>
-            <span>Expressions</span>
-          </motion.div>
-        </div>
+        
+        {!searchTerm && (
+          <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+            <motion.div 
+              className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
+              whileHover={{ scale: 1.05 }}
+            >
+              <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">1/2</code>
+              <span>Fractions</span>
+            </motion.div>
+            <motion.div 
+              className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
+              whileHover={{ scale: 1.05 }}
+            >
+              <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">sqrt(2)</code>
+              <span>Surds</span>
+            </motion.div>
+            <motion.div 
+              className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 rounded-full backdrop-blur-sm"
+              whileHover={{ scale: 1.05 }}
+            >
+              <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">3*pi</code>
+              <span>Expressions</span>
+            </motion.div>
+          </div>
+        )}
       </motion.div>
 
       {/* Controls */}
@@ -275,7 +351,7 @@ export default function EnhancedEquationGrid() {
             <div className="w-full md:flex-1">
               <SearchBar
                 value={searchTerm}
-                onChange={setSearchTerm}
+                onChange={handleSearchChange}
                 placeholder="Search equations, categories, or descriptions..."
               />
             </div>
@@ -283,7 +359,7 @@ export default function EnhancedEquationGrid() {
             {/* Controls row */}
             <div className="flex items-center justify-between md:justify-end gap-4">
               <div className="flex-1 md:flex-none">
-                <SortDropdown value={sortBy} onChange={setSortBy} />
+                <SortDropdown value={sortBy} onChange={handleSortChange} />
               </div>
               
               {/* Display mode toggle - hidden on mobile */}
@@ -347,6 +423,7 @@ export default function EnhancedEquationGrid() {
           {filteredAndSortedEquations.length} equation
           {filteredAndSortedEquations.length !== 1 ? "s" : ""} found
           {selectedTag && ` in ${selectedTag}`}
+          {searchTerm && ` for "${searchTerm}"`}
         </p>
         {/* Display mode indicator on mobile */}
         <p className="text-sm text-gray-500 dark:text-gray-500 mt-1 md:hidden">
@@ -396,8 +473,23 @@ export default function EnhancedEquationGrid() {
         >
           <p className="text-gray-500 text-xl dark:text-gray-400">
             No equations found matching your search
-            {selectedTag && ` in category "${selectedTag}"`}.
+            {selectedTag && ` in category "${selectedTag}"`}
+            {searchTerm && ` for "${searchTerm}"`}.
           </p>
+          {(searchTerm || selectedTag) && (
+            <motion.button
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedTag(null);
+                updateURL("", sortBy, null);
+              }}
+              className="mt-4 px-6 py-3 bg-cyan-600 text-white rounded-full hover:bg-cyan-700 transition-colors font-medium"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Clear Search & Filters
+            </motion.button>
+          )}
         </motion.div>
       )}
     </div>
