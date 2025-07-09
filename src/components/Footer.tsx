@@ -134,7 +134,7 @@ const Footer = () => {
               <div className="space-y-3">
                 {[
                   { href: "/", label: "Equation Library" },
-                  { href: "/favorites", label: "My Favorites" },
+                  { href: "/favorites", label: "My Favourites" },
                   { href: "/settings", label: "Settings" },
                   { href: "https://equalab.uk", label: "EquaLab Home" },
               
