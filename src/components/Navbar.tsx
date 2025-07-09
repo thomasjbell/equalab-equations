@@ -311,7 +311,7 @@ export default function Navbar() {
                         {/* Menu Items */}
                         <div className="py-2">
                           <DropdownMenuItem href="/favorites" icon={Heart}>
-                            My Favorites
+                            My Favourites
                           </DropdownMenuItem>
 
                           <DropdownMenuItem href="/settings" icon={Settings}>
