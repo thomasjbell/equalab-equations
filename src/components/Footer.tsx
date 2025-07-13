@@ -87,7 +87,7 @@ const Footer = () => {
               </p>
               <div className="flex items-center space-x-2 text-gray-400">
                 <span className="text-center">
-                  Made by{" "}
+                  Created by{" "}
                   <a
                     href="https://webbldesign.vercel.app"
                     className="hover:bg-gradient-to-r hover:from-violet-400 hover:to-fuchsia-400 bg-clip-text text-transparent transition-colors bg-gray-400 duration-200"
@@ -136,7 +136,7 @@ const Footer = () => {
                   { href: "/", label: "Equation Library" },
                   { href: "/favourites", label: "My Favourites" },
                   { href: "/settings", label: "Settings" },
-                  { href: "https://equalab.uk", label: "EquaLab Home" },
+                  { href: "https://www.equalab.uk", label: "EquaLab Home" },
               
                 ].map((link, index) => (
                   <motion.a

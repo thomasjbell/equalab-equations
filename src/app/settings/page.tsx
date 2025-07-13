@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Cog6ToothIcon,
@@ -21,6 +21,7 @@ import {
   ShieldExclamationIcon,
   DocumentArrowDownIcon,
   ExclamationTriangleIcon,
+  PaintBrushIcon,
 } from "@heroicons/react/24/outline";
 import { useSettings } from "@/lib/contexts/SettingsContext";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -43,6 +44,27 @@ export default function SettingsPage() {
   const [accountDeleteError, setAccountDeleteError] = useState<string | null>(null);
 
   const supabase = createClient();
+
+  // Handle theme changes
+  const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
+    updateSetting('theme', newTheme);
+    
+    // Apply theme immediately
+    const root = document.documentElement;
+    root.classList.remove('dark');
+    
+    if (newTheme === 'dark') {
+      root.classList.add('dark');
+    } else if (newTheme === 'light') {
+      // Light mode is default, no class needed
+    } else {
+      // System preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (prefersDark) {
+        root.classList.add('dark');
+      }
+    }
+  };
 
   const handleReset = async () => {
     if (!resetConfirm) {
@@ -234,6 +256,27 @@ export default function SettingsPage() {
       value: "expanded",
       label: "Expanded",
       description: "Equations start expanded",
+    },
+  ];
+
+  const themeOptions = [
+    {
+      value: "light",
+      label: "Light",
+      description: "Always use light theme",
+      icon: SunIcon,
+    },
+    {
+      value: "dark", 
+      label: "Dark",
+      description: "Always use dark theme",
+      icon: MoonIcon,
+    },
+    {
+      value: "system",
+      label: "System",
+      description: "Follow device theme preference",
+      icon: ComputerDesktopIcon,
     },
   ];
 
@@ -496,6 +539,140 @@ export default function SettingsPage() {
                     {settings.number_format === "decimal_places"
                       ? `${settings.decimal_places} decimal places`
                       : `${settings.significant_figures} significant figures`}
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+
+            {/* Appearance Settings */}
+            <motion.div
+              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8"
+              variants={cardVariants}
+            >
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl flex items-center justify-center">
+                  <PaintBrushIcon className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Appearance
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Visual preferences and theme
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                {/* Theme Selection */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                    Theme Preference
+                  </label>
+                  <div className="grid grid-cols-1 gap-3">
+                    {themeOptions.map((option) => {
+                      const IconComponent = option.icon;
+                      return (
+                        <motion.label
+                          key={option.value}
+                          className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                            settings.theme === option.value
+                              ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20"
+                              : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                          }`}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <input
+                            type="radio"
+                            name="theme"
+                            value={option.value}
+                            checked={settings.theme === option.value}
+                            onChange={(e) =>
+                              handleThemeChange(e.target.value as any)
+                            }
+                            className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300"
+                          />
+                          <div className="ml-4 flex-1">
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-lg ${
+                                settings.theme === option.value
+                                  ? "bg-cyan-500 text-white"
+                                  : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                              }`}>
+                                <IconComponent className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                  {option.label}
+                                </span>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {option.description}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Animation Settings */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Enable Animations
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Smooth transitions and motion effects
+                    </p>
+                  </div>
+                  <motion.button
+                    onClick={() =>
+                      updateSetting("animations_enabled", !settings.animations_enabled)
+                    }
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                      settings.animations_enabled
+                        ? "bg-cyan-600"
+                        : "bg-gray-300 dark:bg-gray-600"
+                    }`}
+                    variants={buttonVariants}
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    <motion.span
+                      className="inline-block h-5 w-5 transform rounded-full bg-white shadow-lg"
+                      animate={{
+                        x: settings.animations_enabled ? 24 : 4,
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 30,
+                      }}
+                    />
+                  </motion.button>
+                </div>
+
+                {/* Theme Preview */}
+                <motion.div
+                  className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-2xl border border-gray-200 dark:border-gray-600"
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-3">
+                    Current Theme Preview:
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+                      <div className="h-3 bg-cyan-400 rounded-full w-3/4"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full w-1/2"></div>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="font-medium capitalize">{settings.theme} mode</div>
+                      <div>Animations: {settings.animations_enabled ? 'On' : 'Off'}</div>
+                    </div>
                   </div>
                 </motion.div>
               </div>
