@@ -17,8 +17,6 @@ import {
   ShieldExclamationIcon,
   DocumentArrowDownIcon,
   ExclamationTriangleIcon,
-  CpuChipIcon,
-  BeakerIcon,
 } from "@heroicons/react/24/outline";
 import { useSettings } from "@/lib/contexts/SettingsContext";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -334,505 +332,367 @@ export default function SettingsPage() {
             </div>
           </motion.div>
 
-          {/* Settings Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Number Display Settings */}
-            <motion.div
-              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8"
-              variants={cardVariants}
-            >
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <CalculatorIcon className="w-6 h-6 text-white" />
-                </div>
+          {/* Combined Number Display & Equation Behavior - Full width */}
+          <motion.div
+            className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8"
+            variants={cardVariants}
+          >
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <CalculatorIcon className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Display & Behavior
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400">
+                  How numbers are formatted and equations function
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              {/* Left Column - Number Display */}
+              <div className="space-y-8">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     Number Display
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    How numbers are formatted
-                  </p>
-                </div>
-              </div>
+                  </h3>
 
-              <div className="space-y-8">
-                {/* Number Format */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
-                    Number Format
-                  </label>
-                  <div className="space-y-3">
-                    {numberFormatOptions.map((option) => (
-                      <motion.label
-                        key={option.value}
-                        className="flex items-start cursor-pointer group"
-                        whileHover={{ x: 4 }}
+                  {/* Number Format */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                      Number Format
+                    </label>
+                    <div className="space-y-3">
+                      {numberFormatOptions.map((option) => (
+                        <motion.label
+                          key={option.value}
+                          className="flex items-start cursor-pointer group"
+                          whileHover={{ x: 4 }}
+                        >
+                          <input
+                            type="radio"
+                            name="number_format"
+                            value={option.value}
+                            checked={settings.number_format === option.value}
+                            onChange={(e) =>
+                              updateSetting(
+                                "number_format",
+                                e.target.value as any
+                              )
+                            }
+                            className="mt-1 h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300"
+                          />
+                          <div className="ml-3">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+                              {option.label}
+                            </span>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {option.description}
+                            </p>
+                          </div>
+                        </motion.label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Slider Controls */}
+                  <AnimatePresence mode="wait">
+                    {settings.number_format === "decimal_places" ? (
+                      <motion.div
+                        key="decimal"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3 }}
+                        className="mb-6"
                       >
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                          Decimal Places: {settings.decimal_places}
+                        </label>
                         <input
-                          type="radio"
-                          name="number_format"
-                          value={option.value}
-                          checked={settings.number_format === option.value}
+                          type="range"
+                          min="0"
+                          max="10"
+                          value={settings.decimal_places}
                           onChange={(e) =>
                             updateSetting(
-                              "number_format",
-                              e.target.value as any
+                              "decimal_places",
+                              parseInt(e.target.value)
                             )
                           }
-                          className="mt-1 h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300"
+                          className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
                         />
-                        <div className="ml-3">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
-                            {option.label}
-                          </span>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {option.description}
-                          </p>
+                        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          <span>0</span>
+                          <span>5</span>
+                          <span>10</span>
                         </div>
-                      </motion.label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Slider Controls */}
-                <AnimatePresence mode="wait">
-                  {settings.number_format === "decimal_places" ? (
-                    <motion.div
-                      key="decimal"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                        Decimal Places: {settings.decimal_places}
-                      </label>
-                      <input
-                        type="range"
-                        min="0"
-                        max="10"
-                        value={settings.decimal_places}
-                        onChange={(e) =>
-                          updateSetting(
-                            "decimal_places",
-                            parseInt(e.target.value)
-                          )
-                        }
-                        className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
-                      />
-                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        <span>0</span>
-                        <span>5</span>
-                        <span>10</span>
-                      </div>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="significant"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                        Significant Figures: {settings.significant_figures}
-                      </label>
-                      <input
-                        type="range"
-                        min="1"
-                        max="15"
-                        value={settings.significant_figures}
-                        onChange={(e) =>
-                          updateSetting(
-                            "significant_figures",
-                            parseInt(e.target.value)
-                          )
-                        }
-                        className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
-                      />
-                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        <span>1</span>
-                        <span>8</span>
-                        <span>15</span>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Preview */}
-                <motion.div
-                  className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-2xl border border-gray-200 dark:border-gray-600"
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                    Live Preview:
-                  </div>
-                  <div className="space-y-2">
-                    <div className="font-mono text-lg text-gray-900 dark:text-white">
-                      π ≈{" "}
-                      {settings.number_format === "decimal_places"
-                        ? Math.PI.toFixed(settings.decimal_places)
-                        : Math.PI.toPrecision(settings.significant_figures)}
-                    </div>
-                    <div className="font-mono text-sm text-gray-600 dark:text-gray-400">
-                      √2 ≈{" "}
-                      {settings.number_format === "decimal_places"
-                        ? Math.sqrt(2).toFixed(settings.decimal_places)
-                        : Math.sqrt(2).toPrecision(
-                            settings.significant_figures
-                          )}
-                    </div>
-                    <div className="font-mono text-sm text-gray-600 dark:text-gray-400">
-                      e ≈{" "}
-                      {settings.number_format === "decimal_places"
-                        ? Math.E.toFixed(settings.decimal_places)
-                        : Math.E.toPrecision(settings.significant_figures)}
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Format:{" "}
-                    {settings.number_format === "decimal_places"
-                      ? `${settings.decimal_places} decimal places`
-                      : `${settings.significant_figures} significant figures`}
-                  </div>
-                </motion.div>
-              </div>
-            </motion.div>
-
-            {/* Calculation Preferences */}
-            <motion.div
-              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8"
-              variants={cardVariants}
-            >
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl flex items-center justify-center">
-                  <CpuChipIcon className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    Calculation Preferences
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    How calculations are processed
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-8">
-                {/* Calculation Mode */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
-                    Preferred Calculation Mode
-                  </label>
-                  <div className="space-y-3">
-                    <motion.label
-                      className="flex items-start cursor-pointer group"
-                      whileHover={{ x: 4 }}
-                    >
-                      <input
-                        type="radio"
-                        name="calc_mode"
-                        value="exact"
-                        defaultChecked
-                        className="mt-1 h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300"
-                      />
-                      <div className="ml-3">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
-                          Exact Computation
-                        </span>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Prioritize exact symbolic results when possible
-                        </p>
-                      </div>
-                    </motion.label>
-                    <motion.label
-                      className="flex items-start cursor-pointer group"
-                      whileHover={{ x: 4 }}
-                    >
-                      <input
-                        type="radio"
-                        name="calc_mode"
-                        value="fast"
-                        className="mt-1 h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300"
-                      />
-                      <div className="ml-3">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
-                          Fast Computation
-                        </span>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Prioritize speed over exact symbolic results
-                        </p>
-                      </div>
-                    </motion.label>
-                  </div>
-                </div>
-
-                {/* Simplification Level */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                    Automatic Simplification Level: 3
-                  </label>
-                  <input
-                    type="range"
-                    min="1"
-                    max="5"
-                    defaultValue="3"
-                    className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    <span>Minimal</span>
-                    <span>Moderate</span>
-                    <span>Aggressive</span>
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Controls how aggressively expressions are simplified
-                  </p>
-                </div>
-
-                {/* Fraction Handling */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      Auto-Convert to Mixed Numbers
-                    </label>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Convert improper fractions like 7/3 to 2⅓
-                    </p>
-                  </div>
-                  <motion.button
-                    onClick={() => {/* Handle toggle */}}
-                    className="relative inline-flex h-7 w-12 items-center rounded-full transition-colors bg-gray-300 dark:bg-gray-600"
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                  >
-                    <motion.span
-                      className="inline-block h-5 w-5 transform rounded-full bg-white shadow-lg"
-                      animate={{ x: 4 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 30,
-                      }}
-                    />
-                  </motion.button>
-                </div>
-
-                {/* Angle Units */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
-                    Default Angle Units
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {['Degrees', 'Radians', 'Gradians'].map((unit, index) => (
-                      <motion.label
-                        key={unit}
-                        className={`flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                          index === 0
-                            ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20"
-                            : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                        }`}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="significant"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3 }}
+                        className="mb-6"
                       >
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                          Significant Figures: {settings.significant_figures}
+                        </label>
                         <input
-                          type="radio"
-                          name="angle_units"
-                          value={unit.toLowerCase()}
-                          defaultChecked={index === 0}
-                          className="sr-only"
+                          type="range"
+                          min="1"
+                          max="15"
+                          value={settings.significant_figures}
+                          onChange={(e) =>
+                            updateSetting(
+                              "significant_figures",
+                              parseInt(e.target.value)
+                            )
+                          }
+                          className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
                         />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {unit}
-                        </span>
-                      </motion.label>
-                    ))}
-                  </div>
-                </div>
+                        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          <span>1</span>
+                          <span>8</span>
+                          <span>15</span>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
-                {/* Calculation Status */}
-                <motion.div
-                  className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-2xl border border-gray-200 dark:border-gray-600"
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
-                    Calculation Engine Status:
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      Symbolic computation engine active
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <BeakerIcon className="w-4 h-4 text-cyan-500" />
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      Exact arithmetic • Fraction simplification • Surd computation
-                    </span>
-                  </div>
-                </motion.div>
+                  {/* Preview */}
+                  <motion.div
+                    className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-2xl border border-gray-200 dark:border-gray-600"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                      Live Preview:
+                    </div>
+                    <div className="space-y-2">
+                      <div className="font-mono text-lg text-gray-900 dark:text-white">
+                        π ≈{" "}
+                        {settings.number_format === "decimal_places"
+                          ? Math.PI.toFixed(settings.decimal_places)
+                          : Math.PI.toPrecision(settings.significant_figures)}
+                      </div>
+                      <div className="font-mono text-sm text-gray-600 dark:text-gray-400">
+                        √2 ≈{" "}
+                        {settings.number_format === "decimal_places"
+                          ? Math.sqrt(2).toFixed(settings.decimal_places)
+                          : Math.sqrt(2).toPrecision(
+                              settings.significant_figures
+                            )}
+                      </div>
+                      <div className="font-mono text-sm text-gray-600 dark:text-gray-400">
+                        e ≈{" "}
+                        {settings.number_format === "decimal_places"
+                          ? Math.E.toFixed(settings.decimal_places)
+                          : Math.E.toPrecision(settings.significant_figures)}
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      Format:{" "}
+                      {settings.number_format === "decimal_places"
+                        ? `${settings.decimal_places} decimal places`
+                        : `${settings.significant_figures} significant figures`}
+                    </div>
+                  </motion.div>
+                </div>
               </div>
-            </motion.div>
 
-            {/* Equation Behavior */}
-            <motion.div
-              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8"
-              variants={cardVariants}
-            >
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                  <SparklesIcon className="w-6 h-6 text-white" />
-                </div>
+              {/* Right Column - Equation Behavior */}
+              <div className="space-y-8">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     Equation Behavior
+                  </h3>
+
+                  {/* Default Result Mode */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                      Default Result Display
+                    </label>
+                    <div className="space-y-3">
+                      {resultModeOptions.map((option) => (
+                        <motion.label
+                          key={option.value}
+                          className="flex items-start cursor-pointer group"
+                          whileHover={{ x: 4 }}
+                        >
+                          <input
+                            type="radio"
+                            name="result_mode"
+                            value={option.value}
+                            checked={
+                              settings.default_result_mode === option.value
+                            }
+                            onChange={(e) =>
+                              updateSetting(
+                                "default_result_mode",
+                                e.target.value as any
+                              )
+                            }
+                            className="mt-1 h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300"
+                          />
+                          <div className="ml-3">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+                              {option.label}
+                            </span>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {option.description}
+                            </p>
+                          </div>
+                        </motion.label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Default Equation View */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                      Default Equation View
+                    </label>
+                    <div className="space-y-3">
+                      {equationViewOptions.map((option) => (
+                        <motion.label
+                          key={option.value}
+                          className="flex items-start cursor-pointer group"
+                          whileHover={{ x: 4 }}
+                        >
+                          <input
+                            type="radio"
+                            name="equation_view"
+                            value={option.value}
+                            checked={
+                              settings.default_equation_view === option.value
+                            }
+                            onChange={(e) =>
+                              updateSetting(
+                                "default_equation_view",
+                                e.target.value as any
+                              )
+                            }
+                            className="mt-1 h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300"
+                          />
+                          <div className="ml-3">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+                              {option.label}
+                            </span>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {option.description}
+                            </p>
+                          </div>
+                        </motion.label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Auto Solve */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        Auto-solve Equations
+                      </label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Automatically calculate results as you type
+                      </p>
+                    </div>
+                    <motion.button
+                      onClick={() =>
+                        updateSetting("auto_solve", !settings.auto_solve)
+                      }
+                      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                        settings.auto_solve
+                          ? "bg-cyan-600"
+                          : "bg-gray-300 dark:bg-gray-600"
+                      }`}
+                      variants={buttonVariants}
+                      whileHover="hover"
+                      whileTap="tap"
+                    >
+                      <motion.span
+                        className="inline-block h-5 w-5 transform rounded-full bg-white shadow-lg"
+                        animate={{
+                          x: settings.auto_solve ? 24 : 4,
+                        }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 30,
+                        }}
+                      />
+                    </motion.button>
+                  </div>
+
+                  {/* Animations Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        Enable Animations
+                      </label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Smooth transitions and motion effects
+                      </p>
+                    </div>
+                    <motion.button
+                      onClick={() =>
+                        updateSetting("animations_enabled", !settings.animations_enabled)
+                      }
+                      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                        settings.animations_enabled
+                          ? "bg-cyan-600"
+                          : "bg-gray-300 dark:bg-gray-600"
+                      }`}
+                      variants={buttonVariants}
+                      whileHover="hover"
+                      whileTap="tap"
+                    >
+                      <motion.span
+                        className="inline-block h-5 w-5 transform rounded-full bg-white shadow-lg"
+                        animate={{
+                          x: settings.animations_enabled ? 24 : 4,
+                        }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 30,
+                        }}
+                      />
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Account Management - Full width, thin when signed in */}
+          {user && (
+            <motion.div
+              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8"
+              variants={cardVariants}
+            >
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                  <UserIcon className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Account Management
                   </h2>
                   <p className="text-gray-600 dark:text-gray-400">
-                    How equations function
+                    Manage your account information and data
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-8">
-                {/* Default Result Mode */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
-                    Default Result Display
-                  </label>
-                  <div className="space-y-3">
-                    {resultModeOptions.map((option) => (
-                      <motion.label
-                        key={option.value}
-                        className="flex items-start cursor-pointer group"
-                        whileHover={{ x: 4 }}
-                      >
-                        <input
-                          type="radio"
-                          name="result_mode"
-                          value={option.value}
-                          checked={
-                            settings.default_result_mode === option.value
-                          }
-                          onChange={(e) =>
-                            updateSetting(
-                              "default_result_mode",
-                              e.target.value as any
-                            )
-                          }
-                          className="mt-1 h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300"
-                        />
-                        <div className="ml-3">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
-                            {option.label}
-                          </span>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {option.description}
-                          </p>
-                        </div>
-                      </motion.label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Default Equation View */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
-                    Default Equation View
-                  </label>
-                  <div className="space-y-3">
-                    {equationViewOptions.map((option) => (
-                      <motion.label
-                        key={option.value}
-                        className="flex items-start cursor-pointer group"
-                        whileHover={{ x: 4 }}
-                      >
-                        <input
-                          type="radio"
-                          name="equation_view"
-                          value={option.value}
-                          checked={
-                            settings.default_equation_view === option.value
-                          }
-                          onChange={(e) =>
-                            updateSetting(
-                              "default_equation_view",
-                              e.target.value as any
-                            )
-                          }
-                          className="mt-1 h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300"
-                        />
-                        <div className="ml-3">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
-                            {option.label}
-                          </span>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {option.description}
-                          </p>
-                        </div>
-                      </motion.label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Auto Solve */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      Auto-solve Equations
-                    </label>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Automatically calculate results as you type
-                    </p>
-                  </div>
-                  <motion.button
-                    onClick={() =>
-                      updateSetting("auto_solve", !settings.auto_solve)
-                    }
-                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                      settings.auto_solve
-                        ? "bg-cyan-600"
-                        : "bg-gray-300 dark:bg-gray-600"
-                    }`}
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                  >
-                    <motion.span
-                      className="inline-block h-5 w-5 transform rounded-full bg-white shadow-lg"
-                      animate={{
-                        x: settings.auto_solve ? 24 : 4,
-                      }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 30,
-                      }}
-                    />
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Account Management - Only show for logged in users */}
-            {user && (
-              <motion.div
-                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8"
-                variants={cardVariants}
-              >
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                    <UserIcon className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                      Account
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Manage your account information
-                    </p>
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Left Column - Account Info & Export */}
                 <div className="space-y-6">
                   {/* Account Info */}
                   <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl border border-blue-200 dark:border-blue-800">
@@ -842,11 +702,28 @@ export default function SettingsPage() {
                     </h3>
                     <div className="space-y-2 text-sm text-blue-700 dark:text-blue-300">
                       <p><strong>Email:</strong> {user.email}</p>
-                      <p><strong>Account created:</strong> {new Date(user.created_at || '').toLocaleDateString()}</p>
+                      <p><strong>Created:</strong> {new Date(user.created_at || '').toLocaleDateString()}</p>
                       <p><strong>Last sign in:</strong> {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'Unknown'}</p>
                     </div>
                   </div>
 
+                  {/* Cloud Sync Status */}
+                  <motion.div
+                    className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl border border-green-200 dark:border-green-800"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <h3 className="font-bold text-green-800 dark:text-green-200 mb-3 flex items-center gap-2">
+                      <CloudArrowUpIcon className="w-5 h-5" />
+                      Cloud Sync Active
+                    </h3>
+                    <p className="text-sm text-green-700 dark:text-green-300">
+                      Your settings and favorites are automatically synchronized across all devices.
+                    </p>
+                  </motion.div>
+                </div>
+
+                {/* Right Column - Export Data */}
+                <div className="space-y-6">
                   {/* Export Data */}
                   <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl border border-green-200 dark:border-green-800">
                     <h3 className="font-bold text-green-800 dark:text-green-200 mb-3 flex items-center gap-2">
@@ -854,7 +731,7 @@ export default function SettingsPage() {
                       Export Your Data
                     </h3>
                     <p className="text-sm text-green-700 dark:text-green-300 mb-4">
-                      Download a copy of all your data including favorites and settings.
+                      Download a copy of all your data including favorites, settings, and account information.
                     </p>
                     <motion.button
                       onClick={handleExportData}
@@ -881,10 +758,31 @@ export default function SettingsPage() {
                       )}
                     </motion.button>
                   </div>
+
+                  {/* Quick Stats */}
+                  <div className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-2xl border border-gray-200 dark:border-gray-600">
+                    <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-3">
+                      Quick Stats
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-cyan-600 dark:text-cyan-400">
+                          {settings.favorite_categories.length || '—'}
+                        </div>
+                        <div className="text-gray-600 dark:text-gray-400">Categories</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                          {settings.animations_enabled ? 'On' : 'Off'}
+                        </div>
+                        <div className="text-gray-600 dark:text-gray-400">Animations</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </motion.div>
-            )}
-          </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Data & Reset Section - Full width spanning both columns */}
           <motion.div
@@ -956,24 +854,6 @@ export default function SettingsPage() {
                     )}
                   </motion.button>
                 </motion.div>
-
-                {/* Cloud Sync Status */}
-                {user && (
-                  <motion.div
-                    className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl border border-green-200 dark:border-green-800"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <h3 className="font-bold text-green-800 dark:text-green-200 mb-3 flex items-center gap-2">
-                      <CloudArrowUpIcon className="w-5 h-5" />
-                      Cloud Sync Active
-                    </h3>
-                    <p className="text-sm text-green-700 dark:text-green-300">
-                      Your settings are automatically synchronized across all
-                      your devices. Changes are saved within seconds and synced
-                      to the cloud.
-                    </p>
-                  </motion.div>
-                )}
               </div>
 
               {/* Right Column - User Data Actions */}
@@ -1073,7 +953,7 @@ export default function SettingsPage() {
                       <ExclamationTriangleIcon className="w-5 h-5" />
                       Delete Account
                     </h3>
-                    <div className="space-y-3 text-sm text-red-700 dark:text-red-300 mb-4">
+                    <div className="space-y-2 text-sm text-red-700 dark:text-red-300 mb-4">
                       <p className="font-semibold">⚠️ This action is permanent and cannot be undone!</p>
                       <p>Deleting your account will permanently remove all your data.</p>
                     </div>
