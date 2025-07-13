@@ -49,50 +49,79 @@
   max-width: 100%;
 }
 
-/* Dark mode KaTeX styling */
-.dark .katex {
-  color: #ffffff !important; /* white */
+/* KaTeX Color Fixes - Enhanced specificity */
+/* Light mode KaTeX styling - Default */
+html .katex,
+html .katex *,
+.katex,
+.katex * {
+  color: #000000 !important;
 }
 
+/* Dark mode KaTeX styling - Higher specificity */
+html.dark .katex,
+html.dark .katex *,
+.dark .katex,
+.dark .katex *,
+[data-theme="dark"] .katex,
+[data-theme="dark"] .katex * {
+  color: #ffffff !important;
+}
+
+/* Specific KaTeX element overrides for dark mode */
+html.dark .katex .mord,
+html.dark .katex .mop,
+html.dark .katex .mbin,
+html.dark .katex .mrel,
+html.dark .katex .mopen,
+html.dark .katex .mclose,
+html.dark .katex .mpunct,
+html.dark .katex .minner,
+html.dark .katex .mspace,
+html.dark .katex .mord.mtight,
+html.dark .katex .mop.mtight,
+html.dark .katex .mbin.mtight,
+html.dark .katex .mrel.mtight,
+html.dark .katex .mopen.mtight,
+html.dark .katex .mclose.mtight,
+html.dark .katex .mpunct.mtight,
 .dark .katex .mord,
 .dark .katex .mop,
 .dark .katex .mbin,
 .dark .katex .mrel,
 .dark .katex .mopen,
 .dark .katex .mclose,
-.dark .katex .mpunct {
-  color: #ffffff !important; /* white */
+.dark .katex .mpunct,
+.dark .katex .minner,
+.dark .katex .mspace,
+.dark .katex .mord.mtight,
+.dark .katex .mop.mtight,
+.dark .katex .mbin.mtight,
+.dark .katex .mrel.mtight,
+.dark .katex .mopen.mtight,
+.dark .katex .mclose.mtight,
+.dark .katex .mpunct.mtight {
+  color: #ffffff !important;
 }
 
+/* KaTeX fraction lines and sqrt lines for dark mode */
+html.dark .katex .mfrac .frac-line,
 .dark .katex .mfrac .frac-line {
-  border-bottom-color: #ffffff !important; /* white */
+  border-bottom-color: #ffffff !important;
 }
 
+html.dark .katex .sqrt .sqrt-line,
 .dark .katex .sqrt .sqrt-line {
-  border-top-color: #ffffff !important; /* white */
+  border-top-color: #ffffff !important;
 }
 
-/* Light mode KaTeX styling */
-.katex {
-  color: #000000 !important; /* black */
+/* Light mode specific overrides */
+html:not(.dark) .katex .mfrac .frac-line {
+  border-bottom-color: #000000 !important;
 }
 
-.katex .mord,
-.katex .mop,
-.katex .mbin,
-.katex .mrel,
-.katex .mopen,
-.katex .mclose,
-.katex .mpunct {
-  color: #000000 !important; /* black */
-}
-
-.katex .mfrac .frac-line {
-  border-bottom-color: #000000 !important; /* black */
-}
-
-.katex .sqrt .sqrt-line {
-  border-top-color: #000000 !important; /* black */
+html:not(.dark) .katex .sqrt .sqrt-line {
+  border-top-color: #000000 !important;
 }
 
 body {

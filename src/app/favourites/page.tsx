@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import EnhancedEquationCard from "@/components/EnhancedEquationCard";
 import SearchBar from "@/components/SearchBar";
 import SortDropdown from "@/components/SortDropdown";
@@ -17,6 +18,7 @@ interface DatabaseEquationWithFavorites extends DatabaseEquation {
 }
 
 export default function FavoritesPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -134,17 +136,27 @@ export default function FavoritesPage() {
   }, [searchTerm, sortBy, selectedTag, equations]);
 
   const handleCardToggle = (equationId: string) => {
-    const newExpandedCards = new Set(expandedCards);
-    if (newExpandedCards.has(equationId)) {
-      newExpandedCards.delete(equationId);
+    if (displayMode === "grid") {
+      // Navigate to equation page in grid mode
+      router.push(`/equation/${equationId}`);
     } else {
-      newExpandedCards.add(equationId);
+      // Toggle expansion in list mode
+      const newExpandedCards = new Set(expandedCards);
+      if (newExpandedCards.has(equationId)) {
+        newExpandedCards.delete(equationId);
+      } else {
+        newExpandedCards.add(equationId);
+      }
+      setExpandedCards(newExpandedCards);
     }
-    setExpandedCards(newExpandedCards);
   };
 
   const toggleDisplayMode = () => {
     setDisplayMode((prevMode) => (prevMode === "list" ? "grid" : "list"));
+    // Clear expanded cards when switching to grid mode
+    if (displayMode === "list") {
+      setExpandedCards(new Set());
+    }
   };
 
   const handleTagSelect = (tag: string | null) => {
@@ -306,21 +318,24 @@ export default function FavoritesPage() {
                 variants={cardVariants}
               >
                 <div className="flex flex-col gap-6">
-                  <div className="flex flex-row flex-wrap items-center gap-4">
-                    <div className="flex-1 min-w-0">
+                  <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    <div className="w-full md:flex-1">
                       <SearchBar
                         value={searchTerm}
                         onChange={setSearchTerm}
                         placeholder="Search your favorite equations..."
                       />
                     </div>
-                    <div className="flex items-center gap-4">
-                      <SortDropdown value={sortBy} onChange={setSortBy} />
+                    <div className="flex items-center justify-between md:justify-end gap-4">
+                      <div className="flex-1 md:flex-none">
+                        <SortDropdown value={sortBy} onChange={setSortBy} />
+                      </div>
                       <motion.button
                         onClick={toggleDisplayMode}
                         className="p-3 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        title={displayMode === "list" ? "Switch to Grid View" : "Switch to List View"}
                       >
                         {displayMode === "list" ? (
                           <Squares2X2Icon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
@@ -376,6 +391,11 @@ export default function FavoritesPage() {
                   {filteredAndSortedEquations.length !== 1 ? "s" : ""}
                   {selectedTag && ` in ${selectedTag}`}
                 </p>
+                {/* Display mode indicator on mobile */}
+                <p className="text-sm text-gray-500 dark:text-gray-500 mt-1 md:hidden">
+                  Viewing in {displayMode} mode
+                  {displayMode === "grid" && " - Click equations to open"}
+                </p>
               </motion.div>
 
               {/* Equation Cards */}
@@ -405,6 +425,7 @@ export default function FavoritesPage() {
                         onFavoriteToggle={(isFavorited) => handleFavoriteToggle(equation.id, isFavorited)}
                         author={equation.profiles?.name}
                         showFavoriteButton={true}
+                        displayMode={displayMode}
                       />
                     </motion.div>
                   ))}
@@ -420,6 +441,17 @@ export default function FavoritesPage() {
                     No favourite equations found matching your search
                     {selectedTag && ` in category "${selectedTag}"`}.
                   </p>
+                  <motion.button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setSelectedTag(null);
+                    }}
+                    className="mt-4 px-6 py-3 bg-cyan-600 text-white rounded-full hover:bg-cyan-700 transition-colors font-medium"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Clear Search & Filters
+                  </motion.button>
                 </motion.div>
               )}
             </>

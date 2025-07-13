@@ -255,7 +255,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="container mx-auto px-6 py-12 max-w-6xl">
+      <div className="container mx-auto px-6 py-12 max-w-7xl">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -336,29 +336,8 @@ export default function SettingsPage() {
             </div>
           </motion.div>
 
+          {/* Settings Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-           
-            {/* Appearance Settings */}
-            <motion.div
-              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8"
-              variants={cardVariants}
-            >
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl flex items-center justify-center">
-                  <EyeIcon className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    Appearance
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Visual preferences and theme
-                  </p>
-                </div>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center mt-32">Coming Soon</h1>
-            </motion.div>
-
             {/* Number Display Settings */}
             <motion.div
               className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8"
@@ -673,10 +652,10 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                      Account Management
+                      Account
                     </h2>
                     <p className="text-gray-600 dark:text-gray-400">
-                      Manage your account and data
+                      Manage your account information
                     </p>
                   </div>
                 </div>
@@ -702,7 +681,7 @@ export default function SettingsPage() {
                       Export Your Data
                     </h3>
                     <p className="text-sm text-green-700 dark:text-green-300 mb-4">
-                      Download a copy of all your data including favorites, settings, and account information.
+                      Download a copy of all your data including favorites and settings.
                     </p>
                     <motion.button
                       onClick={handleExportData}
@@ -732,26 +711,29 @@ export default function SettingsPage() {
                 </div>
               </motion.div>
             )}
+          </div>
 
-            {/* Data & Reset */}
-            <motion.div
-              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8"
-              variants={cardVariants}
-            >
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center">
-                  <ClockIcon className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    Data & Reset
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Manage your preferences and data
-                  </p>
-                </div>
+          {/* Data & Reset Section - Full width spanning both columns */}
+          <motion.div
+            className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8"
+            variants={cardVariants}
+          >
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center">
+                <ClockIcon className="w-6 h-6 text-white" />
               </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Data & Reset
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Manage your preferences and data
+                </p>
+              </div>
+            </div>
 
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left Column - Reset Settings */}
               <div className="space-y-6">
                 {/* Reset Settings */}
                 <motion.div
@@ -802,14 +784,32 @@ export default function SettingsPage() {
                   </motion.button>
                 </motion.div>
 
-                {/* Delete All Favorites - Only show for logged in users */}
+                {/* Cloud Sync Status */}
                 {user && (
+                  <motion.div
+                    className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl border border-green-200 dark:border-green-800"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <h3 className="font-bold text-green-800 dark:text-green-200 mb-3 flex items-center gap-2">
+                      <CloudArrowUpIcon className="w-5 h-5" />
+                      Cloud Sync Active
+                    </h3>
+                    <p className="text-sm text-green-700 dark:text-green-300">
+                      Your settings are automatically synchronized across all
+                      your devices. Changes are saved within seconds and synced
+                      to the cloud.
+                    </p>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Right Column - User Data Actions */}
+              {user && (
+                <div className="space-y-6">
+                  {/* Delete All Favorites */}
                   <motion.div
                     className="p-6 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-2xl border border-red-200 dark:border-red-800"
                     whileHover={{ scale: 1.02 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.9 }}
                   >
                     <h3 className="font-bold text-red-800 dark:text-red-200 mb-3 flex items-center gap-2">
                       <HeartIcon className="w-5 h-5" />
@@ -890,16 +890,11 @@ export default function SettingsPage() {
                       )}
                     </motion.button>
                   </motion.div>
-                )}
 
-                {/* Delete Account - Only show for logged in users */}
-                {user && (
+                  {/* Delete Account */}
                   <motion.div
                     className="p-6 bg-gradient-to-r from-red-100 to-red-50 dark:from-red-900/40 dark:to-red-900/20 rounded-2xl border-2 border-red-300 dark:border-red-700"
                     whileHover={{ scale: 1.02 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 1.0 }}
                   >
                     <h3 className="font-bold text-red-800 dark:text-red-200 mb-3 flex items-center gap-2">
                       <ExclamationTriangleIcon className="w-5 h-5" />
@@ -907,15 +902,7 @@ export default function SettingsPage() {
                     </h3>
                     <div className="space-y-3 text-sm text-red-700 dark:text-red-300 mb-4">
                       <p className="font-semibold">⚠️ This action is permanent and cannot be undone!</p>
-                      <p>Deleting your account will:</p>
-                      <ul className="list-disc ml-6 space-y-1">
-                        <li>Permanently delete your account and profile</li>
-                        <li>Remove all your favorites</li>
-                        <li>Delete your settings and preferences</li>
-                        <li>Remove any equations you've created</li>
-                        <li>Sign you out of all devices</li>
-                      </ul>
-                      <p className="font-semibold">Consider exporting your data first if you want to keep a copy.</p>
+                      <p>Deleting your account will permanently remove all your data.</p>
                     </div>
 
                     {/* Error Message */}
@@ -962,7 +949,7 @@ export default function SettingsPage() {
                       ) : deleteAccountConfirm ? (
                         <div className="flex items-center gap-2">
                           <ShieldExclamationIcon className="w-5 h-5" />
-                          PERMANENTLY DELETE ACCOUNT
+                          PERMANENTLY DELETE
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
@@ -982,31 +969,10 @@ export default function SettingsPage() {
                       </motion.p>
                     )}
                   </motion.div>
-                )}
-
-                {/* Cloud Sync Status */}
-                {user && (
-                  <motion.div
-                    className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl border border-green-200 dark:border-green-800"
-                    whileHover={{ scale: 1.02 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 1.1 }}
-                  >
-                    <h3 className="font-bold text-green-800 dark:text-green-200 mb-3 flex items-center gap-2">
-                      <CloudArrowUpIcon className="w-5 h-5" />
-                      Cloud Sync Active
-                    </h3>
-                    <p className="text-sm text-green-700 dark:text-green-300">
-                      Your settings are automatically synchronized across all
-                      your devices. Changes are saved within seconds and synced
-                      to the cloud.
-                    </p>
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-          </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
         </motion.div>
       </div>
     </div>
