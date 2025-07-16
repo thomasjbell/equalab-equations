@@ -31,6 +31,7 @@ interface EnhancedEquationCardProps {
   author?: string;
   showFavoriteButton?: boolean;
   displayMode?: "list" | "grid";
+  disableInitialAnimation?: boolean; // Add this new prop
 }
 
 interface EquationInputState {
@@ -52,6 +53,7 @@ export default function EnhancedEquationCard({
   author,
   showFavoriteButton = false,
   displayMode = "list",
+  disableInitialAnimation = false, // Add this
 }: EnhancedEquationCardProps) {
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [parsedInputs, setParsedInputs] = useState<Record<string, ExactNumber>>(
@@ -393,6 +395,13 @@ export default function EnhancedEquationCard({
         }`}
         whileHover={{ y: -1 }}
         transition={{ duration: 0.2 }}
+        // Skip initial animation if disabled
+        initial={disableInitialAnimation ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        // Only animate on first load if not disabled
+        {...(!disableInitialAnimation && {
+          transition: { duration: 0.4 }
+        })}
       >
         {/* Header */}
         <div

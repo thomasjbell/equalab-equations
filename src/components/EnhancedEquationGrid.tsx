@@ -26,6 +26,7 @@ interface PersistedState {
 }
 
 const STATE_STORAGE_KEY = 'equalab_equation_grid_state';
+const VISIT_STORAGE_KEY = 'equalab_has_visited';
 const STATE_EXPIRY_TIME = 24 * 60 * 60 * 1000; // 24 hours
 
 export default function EnhancedEquationGrid() {
@@ -42,9 +43,33 @@ export default function EnhancedEquationGrid() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stateRestored, setStateRestored] = useState(false);
+  const [isReturningVisit, setIsReturningVisit] = useState(false);
 
   const { user } = useAuth();
   const supabase = createClient();
+
+  // Check if this is a returning visit
+  useEffect(() => {
+    const checkVisitStatus = () => {
+      try {
+        const hasVisited = localStorage.getItem(VISIT_STORAGE_KEY);
+        const hasPersistedState = localStorage.getItem(STATE_STORAGE_KEY);
+        
+        if (hasVisited && hasPersistedState) {
+          setIsReturningVisit(true);
+        } else {
+          // Mark as visited for next time
+          localStorage.setItem(VISIT_STORAGE_KEY, 'true');
+          setIsReturningVisit(false);
+        }
+      } catch (error) {
+        console.error('Error checking visit status:', error);
+        setIsReturningVisit(false);
+      }
+    };
+
+    checkVisitStatus();
+  }, []);
 
   // Load persisted state on mount
   useEffect(() => {
@@ -384,6 +409,65 @@ export default function EnhancedEquationGrid() {
     document.title = getPageTitle();
   }, [searchTerm, selectedTag]);
 
+  // Animation variants - different for first visit vs returning visit
+  const headerVariants = {
+    hidden: { opacity: 0, y: isReturningVisit ? 0 : 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: isReturningVisit ? 0.2 : 0.6,
+        delay: isReturningVisit ? 0 : 0
+      }
+    }
+  };
+
+  const controlsVariants = {
+    hidden: { opacity: 0, y: isReturningVisit ? 0 : 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: isReturningVisit ? 0.2 : 0.6,
+        delay: isReturningVisit ? 0 : 0.2
+      }
+    }
+  };
+
+  const resultsVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        duration: isReturningVisit ? 0.2 : 0.6,
+        delay: isReturningVisit ? 0 : 0.4
+      }
+    }
+  };
+
+  const gridVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        duration: isReturningVisit ? 0.2 : 0.6,
+        delay: isReturningVisit ? 0 : 0.6,
+        staggerChildren: isReturningVisit ? 0 : 0.1
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: isReturningVisit ? 0 : 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: isReturningVisit ? 0.1 : 0.4
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -409,9 +493,9 @@ export default function EnhancedEquationGrid() {
       {/* Header */}
       <motion.div 
         className="text-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
+        variants={headerVariants}
+        initial="hidden"
+        animate="visible"
       >
         <div className="flex justify-center mb-6">
           <motion.div
@@ -466,9 +550,9 @@ export default function EnhancedEquationGrid() {
       {/* Controls */}
       <motion.div 
         className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
+        variants={controlsVariants}
+        initial="hidden"
+        animate="visible"
       >
         <div className="flex flex-col gap-6">
           {/* Mobile: Stack vertically, Desktop: Side by side */}
@@ -541,9 +625,9 @@ export default function EnhancedEquationGrid() {
       {/* Results Count */}
       <motion.div 
         className="text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.4 }}
+        variants={resultsVariants}
+        initial="hidden"
+        animate="visible"
       >
         <p className="text-gray-600 dark:text-gray-400">
           {filteredAndSortedEquations.length} equation
@@ -564,16 +648,14 @@ export default function EnhancedEquationGrid() {
             ? "space-y-6"
             : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         }
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.6 }}
+        variants={gridVariants}
+        initial="hidden"
+        animate="visible"
       >
         {filteredAndSortedEquations.map((equation, index) => (
           <motion.div 
             key={equation.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.1 }}
+            variants={cardVariants}
           >
             <EnhancedEquationCard
               equation={equation}
@@ -586,6 +668,7 @@ export default function EnhancedEquationGrid() {
               author={equation.profiles?.name}
               showFavoriteButton={!!user}
               displayMode={displayMode}
+              disableInitialAnimation={isReturningVisit}
             />
           </motion.div>
         ))}
@@ -594,8 +677,9 @@ export default function EnhancedEquationGrid() {
       {filteredAndSortedEquations.length === 0 && (
         <motion.div 
           className="text-center py-20"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: isReturningVisit ? 0 : 20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: isReturningVisit ? 0.2 : 0.6 }}
         >
           <p className="text-gray-500 text-xl dark:text-gray-400">
             No equations found matching your search
