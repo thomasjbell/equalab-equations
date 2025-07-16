@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import {
   ChevronDownIcon,
-  ChevronUpIcon,
   ClipboardDocumentIcon,
   HeartIcon,
   ShareIcon,
@@ -11,7 +10,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence } from "framer-motion";
-import { InlineMath, BlockMath } from "react-katex";
 import SmartMathInput from "./input/SmartMathInput";
 import ToggleableResult from "./display/ToggleableResult";
 import ShareModal from "./ShareModal";
@@ -35,6 +33,16 @@ interface EnhancedEquationCardProps {
   displayMode?: "list" | "grid";
 }
 
+interface EquationInputState {
+  inputs: Record<string, string>;
+  parsedInputs: Record<string, ExactNumber>;
+  results: Record<string, ExactNumber>;
+  timestamp: number;
+}
+
+const INPUT_STORAGE_PREFIX = 'equalab_equation_input_';
+const INPUT_EXPIRY_TIME = 2 * 60 * 60 * 1000; // 2 hours
+
 export default function EnhancedEquationCard({
   equation,
   isExpanded,
@@ -52,10 +60,101 @@ export default function EnhancedEquationCard({
   const [results, setResults] = useState<Record<string, ExactNumber>>({});
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [inputsRestored, setInputsRestored] = useState(false);
 
   const { settings } = useSettings();
   const router = useRouter();
   const equationRef = useRef<HTMLDivElement>(null);
+
+  const storageKey = `${INPUT_STORAGE_PREFIX}${equation.id}`;
+
+  // Load persisted inputs on mount
+  useEffect(() => {
+    const loadPersistedInputs = () => {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsedState: EquationInputState = JSON.parse(saved);
+          
+          // Check if state is not expired
+          if (Date.now() - parsedState.timestamp < INPUT_EXPIRY_TIME) {
+            setInputs(parsedState.inputs);
+            setParsedInputs(parsedState.parsedInputs);
+            setResults(parsedState.results);
+          } else {
+            // Remove expired state
+            localStorage.removeItem(storageKey);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading persisted inputs:', error);
+        localStorage.removeItem(storageKey);
+      }
+      setInputsRestored(true);
+    };
+
+    loadPersistedInputs();
+  }, [equation.id]);
+
+  // Save inputs to localStorage when they change
+  useEffect(() => {
+    if (inputsRestored && (Object.keys(inputs).length > 0 || Object.keys(results).length > 0)) {
+      const saveInputs = () => {
+        const state: EquationInputState = {
+          inputs,
+          parsedInputs,
+          results,
+          timestamp: Date.now()
+        };
+        
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(state));
+        } catch (error) {
+          console.error('Error saving inputs:', error);
+        }
+      };
+
+      // Debounce the save operation
+      const timeoutId = setTimeout(saveInputs, 1000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [inputs, parsedInputs, results, inputsRestored, storageKey]);
+
+  // Clear inputs from localStorage when cleared
+  useEffect(() => {
+    if (inputsRestored && Object.keys(inputs).length === 0 && Object.keys(results).length === 0) {
+      try {
+        localStorage.removeItem(storageKey);
+      } catch (error) {
+        console.error('Error removing inputs from storage:', error);
+      }
+    }
+  }, [inputs, results, inputsRestored, storageKey]);
+
+  // Save inputs when page becomes hidden
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && inputsRestored) {
+        const state: EquationInputState = {
+          inputs,
+          parsedInputs,
+          results,
+          timestamp: Date.now()
+        };
+        
+        try {
+          if (Object.keys(inputs).length > 0 || Object.keys(results).length > 0) {
+            localStorage.setItem(storageKey, JSON.stringify(state));
+          }
+        } catch (error) {
+          console.error('Error saving inputs on visibility change:', error);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [inputs, parsedInputs, results, inputsRestored, storageKey]);
 
   // Scale equation to fit container and center it
   useEffect(() => {
@@ -147,6 +246,12 @@ export default function EnhancedEquationCard({
     setInputs({});
     setParsedInputs({});
     setResults({});
+    // Remove from localStorage immediately
+    try {
+      localStorage.removeItem(storageKey);
+    } catch (error) {
+      console.error('Error removing inputs from storage:', error);
+    }
   };
 
   const loadExample = () => {
@@ -436,6 +541,16 @@ export default function EnhancedEquationCard({
                       </motion.button>
                     )}
                   </div>
+                  
+                  {/* Show restore indicator if inputs were restored */}
+                  {inputsRestored && (Object.keys(inputs).length > 0 || Object.keys(results).length > 0) && (
+                    <div className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Restored
+                    </div>
+                  )}
                 </div>
 
                 {/* Variables Grid */}

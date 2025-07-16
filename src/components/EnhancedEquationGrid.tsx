@@ -16,22 +16,159 @@ interface DatabaseEquationWithFavorites extends DatabaseEquation {
   user_favorites: Array<{ id: string }>;
 }
 
+interface PersistedState {
+  searchTerm: string;
+  sortBy: string;
+  selectedTag: string | null;
+  expandedCards: string[];
+  displayMode: "list" | "grid";
+  timestamp: number;
+}
+
+const STATE_STORAGE_KEY = 'equalab_equation_grid_state';
+const STATE_EXPIRY_TIME = 24 * 60 * 60 * 1000; // 24 hours
+
 export default function EnhancedEquationGrid() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Initialize search term from URL params
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || "");
-  const [sortBy, setSortBy] = useState(searchParams.get('sort') || "name");
+  // Initialize state from localStorage or URL params
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("name");
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [displayMode, setDisplayMode] = useState<"list" | "grid">("list");
-  const [selectedTag, setSelectedTag] = useState<string | null>(searchParams.get('category') || null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [equations, setEquations] = useState<DatabaseEquationWithFavorites[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stateRestored, setStateRestored] = useState(false);
 
   const { user } = useAuth();
   const supabase = createClient();
+
+  // Load persisted state on mount
+  useEffect(() => {
+    const loadPersistedState = () => {
+      try {
+        const saved = localStorage.getItem(STATE_STORAGE_KEY);
+        if (saved) {
+          const parsedState: PersistedState = JSON.parse(saved);
+          
+          // Check if state is not expired
+          if (Date.now() - parsedState.timestamp < STATE_EXPIRY_TIME) {
+            // Only restore if no URL params are present (to respect direct links)
+            const hasUrlParams = searchParams.get('search') || searchParams.get('sort') || searchParams.get('category');
+            
+            if (!hasUrlParams) {
+              setSearchTerm(parsedState.searchTerm);
+              setSortBy(parsedState.sortBy);
+              setSelectedTag(parsedState.selectedTag);
+              setExpandedCards(new Set(parsedState.expandedCards));
+              setDisplayMode(parsedState.displayMode);
+            }
+          } else {
+            // Remove expired state
+            localStorage.removeItem(STATE_STORAGE_KEY);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading persisted state:', error);
+        localStorage.removeItem(STATE_STORAGE_KEY);
+      }
+      setStateRestored(true);
+    };
+
+    loadPersistedState();
+  }, []);
+
+  // Initialize from URL params (takes priority over persisted state)
+  useEffect(() => {
+    if (stateRestored) {
+      const urlSearch = searchParams.get('search');
+      const urlSort = searchParams.get('sort');
+      const urlCategory = searchParams.get('category');
+      
+      if (urlSearch) setSearchTerm(urlSearch);
+      if (urlSort) setSortBy(urlSort);
+      if (urlCategory) setSelectedTag(urlCategory);
+    }
+  }, [searchParams, stateRestored]);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    if (stateRestored) {
+      const saveState = () => {
+        const state: PersistedState = {
+          searchTerm,
+          sortBy,
+          selectedTag,
+          expandedCards: Array.from(expandedCards),
+          displayMode,
+          timestamp: Date.now()
+        };
+        
+        try {
+          localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(state));
+        } catch (error) {
+          console.error('Error saving state:', error);
+        }
+      };
+
+      // Debounce the save operation
+      const timeoutId = setTimeout(saveState, 500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [searchTerm, sortBy, selectedTag, expandedCards, displayMode, stateRestored]);
+
+  // Save state when page becomes hidden
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && stateRestored) {
+        const state: PersistedState = {
+          searchTerm,
+          sortBy,
+          selectedTag,
+          expandedCards: Array.from(expandedCards),
+          displayMode,
+          timestamp: Date.now()
+        };
+        
+        try {
+          localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(state));
+        } catch (error) {
+          console.error('Error saving state on visibility change:', error);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [searchTerm, sortBy, selectedTag, expandedCards, displayMode, stateRestored]);
+
+  // Save state before page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (stateRestored) {
+        const state: PersistedState = {
+          searchTerm,
+          sortBy,
+          selectedTag,
+          expandedCards: Array.from(expandedCards),
+          displayMode,
+          timestamp: Date.now()
+        };
+        
+        try {
+          localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(state));
+        } catch (error) {
+          console.error('Error saving state before unload:', error);
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [searchTerm, sortBy, selectedTag, expandedCards, displayMode, stateRestored]);
 
   // Update URL when search parameters change
   const updateURL = (newSearchTerm: string, newSortBy: string, newSelectedTag: string | null) => {
@@ -122,17 +259,6 @@ export default function EnhancedEquationGrid() {
       setLoading(false);
     }
   };
-
-  // Initialize from URL params on mount
-  useEffect(() => {
-    const urlSearch = searchParams.get('search');
-    const urlSort = searchParams.get('sort');
-    const urlCategory = searchParams.get('category');
-    
-    if (urlSearch) setSearchTerm(urlSearch);
-    if (urlSort) setSortBy(urlSort);
-    if (urlCategory) setSelectedTag(urlCategory);
-  }, [searchParams]);
 
   useEffect(() => {
     fetchEquations();
@@ -440,7 +566,7 @@ export default function EnhancedEquationGrid() {
         }
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.4 }}
+        transition={{ duration: 0.6, delay: 0.6 }}
       >
         {filteredAndSortedEquations.map((equation, index) => (
           <motion.div 
