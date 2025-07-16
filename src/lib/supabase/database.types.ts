@@ -1,3 +1,4 @@
+// src/lib/supabase/database.types.ts
 export interface Database {
   public: {
     Tables: {
@@ -9,7 +10,7 @@ export interface Database {
           latex: string;
           description: string | null;
           variables: Variable[];
-          solver_type: string;
+          solver_type: 'linear' | 'quadratic' | 'cubic' | 'geometric' | 'physics' | 'suvat' | 'trigonometry' | 'statistics' | 'chemistry' | 'custom';
           solver_config: any;
           examples: any[];
           is_public: boolean;
@@ -24,7 +25,7 @@ export interface Database {
           latex: string;
           description?: string | null;
           variables: Variable[];
-          solver_type?: string;
+          solver_type?: 'linear' | 'quadratic' | 'cubic' | 'geometric' | 'physics' | 'suvat' | 'trigonometry' | 'statistics' | 'chemistry' | 'custom';
           solver_config?: any;
           examples?: any[];
           is_public?: boolean;
@@ -37,7 +38,7 @@ export interface Database {
           latex?: string;
           description?: string | null;
           variables?: Variable[];
-          solver_type?: string;
+          solver_type?: 'linear' | 'quadratic' | 'cubic' | 'geometric' | 'physics' | 'suvat' | 'trigonometry' | 'statistics' | 'chemistry' | 'custom';
           solver_config?: any;
           examples?: any[];
           is_public?: boolean;
@@ -79,6 +80,46 @@ export interface Database {
         Update: {
           user_id?: string;
           equation_id?: string;
+        };
+      };
+      user_settings: {
+        Row: {
+          id: string;
+          user_id: string;
+          theme: 'light' | 'dark' | 'system';
+          decimal_places: number;
+          significant_figures: number;
+          number_format: 'decimal_places' | 'significant_figures';
+          default_equation_view: 'expanded' | 'collapsed';
+          default_result_mode: 'symbolic' | 'decimal' | 'both';
+          animations_enabled: boolean;
+          auto_solve: boolean;
+          favorite_categories: string[];
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          theme?: 'light' | 'dark' | 'system';
+          decimal_places?: number;
+          significant_figures?: number;
+          number_format?: 'decimal_places' | 'significant_figures';
+          default_equation_view?: 'expanded' | 'collapsed';
+          default_result_mode?: 'symbolic' | 'decimal' | 'both';
+          animations_enabled?: boolean;
+          auto_solve?: boolean;
+          favorite_categories?: string[];
+        };
+        Update: {
+          theme?: 'light' | 'dark' | 'system';
+          decimal_places?: number;
+          significant_figures?: number;
+          number_format?: 'decimal_places' | 'significant_figures';
+          default_equation_view?: 'expanded' | 'collapsed';
+          default_result_mode?: 'symbolic' | 'decimal' | 'both';
+          animations_enabled?: boolean;
+          auto_solve?: boolean;
+          favorite_categories?: string[];
         };
       };
     };

@@ -1,11 +1,11 @@
+// src/components/math/MathResult.tsx
 "use client";
 
 import React from 'react';
 import { ExactNumber } from '@/types/exactNumber';
 import { useSettings } from '@/lib/contexts/SettingsContext';
 import { NumberFormatter } from '@/lib/utils/numberFormatter';
-import 'katex/dist/katex.min.css';
-import { InlineMath } from 'react-katex';
+import LaTeXRenderer from './LaTeXRenderer';
 
 interface MathResultProps {
   result: ExactNumber;
@@ -38,7 +38,7 @@ export default function MathResult({ result, showDecimal = false, className = ""
   return (
     <div className={`math-result ${className}`}>
       <div className="exact-value dark:text-cyan-50">
-        <InlineMath math={getDisplayValue()} />
+        <LaTeXRenderer latex={getDisplayValue()} />
       </div>
       {shouldShowDecimalApproximation() && (
         <div className="decimal-approximation text-sm text-cyan-50 mt-1">

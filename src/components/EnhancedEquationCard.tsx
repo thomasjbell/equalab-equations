@@ -1,24 +1,28 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { 
-  ChevronDownIcon, 
-  ChevronUpIcon, 
-  ClipboardDocumentIcon, 
-  HeartIcon, 
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ClipboardDocumentIcon,
+  HeartIcon,
   ShareIcon,
-  ArrowTopRightOnSquareIcon
+  ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence } from "framer-motion";
-import { InlineMath, BlockMath } from 'react-katex';
+import { InlineMath, BlockMath } from "react-katex";
 import SmartMathInput from "./input/SmartMathInput";
 import ToggleableResult from "./display/ToggleableResult";
 import ShareModal from "./ShareModal";
 import { ExactNumber } from "@/types/exactNumber";
-import { EquationSolverService, DatabaseEquation } from "@/lib/services/equationSolver";
+import {
+  EquationSolverService,
+  DatabaseEquation,
+} from "@/lib/services/equationSolver";
 import { useSettings } from "@/lib/contexts/SettingsContext";
 import { useRouter } from "next/navigation";
+import LaTeXRenderer from "./math/LaTeXRenderer";
 
 interface EnhancedEquationCardProps {
   equation: DatabaseEquation;
@@ -42,7 +46,9 @@ export default function EnhancedEquationCard({
   displayMode = "list",
 }: EnhancedEquationCardProps) {
   const [inputs, setInputs] = useState<Record<string, string>>({});
-  const [parsedInputs, setParsedInputs] = useState<Record<string, ExactNumber>>({});
+  const [parsedInputs, setParsedInputs] = useState<Record<string, ExactNumber>>(
+    {}
+  );
   const [results, setResults] = useState<Record<string, ExactNumber>>({});
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -57,13 +63,13 @@ export default function EnhancedEquationCard({
       if (!equationRef.current) return;
 
       const container = equationRef.current;
-      const equationElement = container.querySelector('.katex-display');
-      
+      const equationElement = container.querySelector(".katex-display");
+
       if (!equationElement) return;
 
       // Reset any previous scaling
-      (equationElement as HTMLElement).style.transform = '';
-      (equationElement as HTMLElement).style.transformOrigin = '';
+      (equationElement as HTMLElement).style.transform = "";
+      (equationElement as HTMLElement).style.transformOrigin = "";
 
       // Get dimensions
       const containerWidth = container.clientWidth;
@@ -73,10 +79,12 @@ export default function EnhancedEquationCard({
         // Scale down to fit and center
         const scale = containerWidth / equationWidth;
         (equationElement as HTMLElement).style.transform = `scale(${scale})`;
-        (equationElement as HTMLElement).style.transformOrigin = 'center center';
+        (equationElement as HTMLElement).style.transformOrigin =
+          "center center";
       } else {
         // If it fits, just center it
-        (equationElement as HTMLElement).style.transformOrigin = 'center center';
+        (equationElement as HTMLElement).style.transformOrigin =
+          "center center";
       }
     };
 
@@ -84,38 +92,47 @@ export default function EnhancedEquationCard({
     const timer = setTimeout(scaleEquation, 100);
 
     // Scale on window resize
-    window.addEventListener('resize', scaleEquation);
+    window.addEventListener("resize", scaleEquation);
 
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('resize', scaleEquation);
+      window.removeEventListener("resize", scaleEquation);
     };
   }, [equation.latex]);
 
-  const handleInputChange = (variable: string, value: string, parsed?: ExactNumber) => {
+  const handleInputChange = (
+    variable: string,
+    value: string,
+    parsed?: ExactNumber | number[]
+  ) => {
     const newInputs = { ...inputs, [variable]: value };
     const newParsedInputs = { ...parsedInputs };
-    
+
     if (value === "") {
       delete newInputs[variable];
       delete newParsedInputs[variable];
-    } else if (parsed) {
+    } else if (parsed && !Array.isArray(parsed)) {
+      // Only handle ExactNumber, ignore arrays for individual equation cards
       newParsedInputs[variable] = parsed;
     } else {
       delete newParsedInputs[variable];
     }
-    
+
     setInputs(newInputs);
     setParsedInputs(newParsedInputs);
-    
+
     if (Object.keys(newParsedInputs).length > 0) {
       try {
         const decimalInputs: Record<string, number> = {};
         Object.entries(newParsedInputs).forEach(([key, exactNum]) => {
           decimalInputs[key] = exactNum.decimal;
         });
-        
-        const newResults = EquationSolverService.solveEquation(equation, decimalInputs, settings);
+
+        const newResults = EquationSolverService.solveEquation(
+          equation,
+          decimalInputs,
+          settings
+        );
         setResults(newResults);
       } catch (error) {
         console.error("Solving error:", error);
@@ -137,33 +154,39 @@ export default function EnhancedEquationCard({
       const example = equation.examples[0];
       const newInputs: Record<string, string> = {};
       const newParsedInputs: Record<string, ExactNumber> = {};
-      
+
       Object.entries(example.input).forEach(([key, value]) => {
-        const numericValue = typeof value === 'number' ? value : parseFloat(value as string);
-        
+        const numericValue =
+          typeof value === "number" ? value : parseFloat(value as string);
+
         if (!isNaN(numericValue)) {
           newInputs[key] = numericValue.toString();
           newParsedInputs[key] = {
-            type: 'decimal',
+            type: "decimal",
             decimal: numericValue,
             latex: numericValue.toString(),
-            simplified: false
+            simplified: false,
           };
         }
       });
-      
+
       setInputs(newInputs);
       setParsedInputs(newParsedInputs);
-      
+
       const numericInputs: Record<string, number> = {};
       Object.entries(example.input).forEach(([key, value]) => {
-        const numericValue = typeof value === 'number' ? value : parseFloat(value as string);
+        const numericValue =
+          typeof value === "number" ? value : parseFloat(value as string);
         if (!isNaN(numericValue)) {
           numericInputs[key] = numericValue;
         }
       });
-      
-      const newResults = EquationSolverService.solveEquation(equation, numericInputs, settings);
+
+      const newResults = EquationSolverService.solveEquation(
+        equation,
+        numericInputs,
+        settings
+      );
       setResults(newResults);
     }
   };
@@ -172,7 +195,7 @@ export default function EnhancedEquationCard({
     const resultStrings = Object.entries(results).map(([variable, result]) => {
       return `${variable} = ${result.latex}`;
     });
-    navigator.clipboard.writeText(resultStrings.join('\n'));
+    navigator.clipboard.writeText(resultStrings.join("\n"));
   };
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
@@ -216,17 +239,17 @@ export default function EnhancedEquationCard({
   const getVariableStatus = (variable: string) => {
     const hasInput = parsedInputs[variable] !== undefined;
     const hasResult = results[variable] !== undefined;
-    
-    if (hasResult) return 'result';
-    if (hasInput) return 'input';
-    return 'empty';
+
+    if (hasResult) return "result";
+    if (hasInput) return "input";
+    return "empty";
   };
 
   const getVariableStatusClass = (status: string) => {
     switch (status) {
-      case 'result':
+      case "result":
         return "border-green-300 bg-green-50 dark:border-green-600 dark:bg-green-900/20";
-      case 'input':
+      case "input":
         return "border-cyan-300 bg-cyan-50 dark:border-cyan-600 dark:bg-cyan-900/20";
       default:
         return "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800";
@@ -259,7 +282,7 @@ export default function EnhancedEquationCard({
 
   return (
     <>
-      <motion.div 
+      <motion.div
         className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 overflow-hidden transition-all duration-200 hover:shadow-xl hover:border-cyan-300/50 dark:hover:border-cyan-600/50 ${
           displayMode === "grid" ? "cursor-pointer" : ""
         }`}
@@ -268,12 +291,18 @@ export default function EnhancedEquationCard({
       >
         {/* Header */}
         <div
-          className={`p-4 sm:p-6 ${displayMode === "list" ? "cursor-pointer" : ""}`}
+          className={`p-4 sm:p-6 ${
+            displayMode === "list" ? "cursor-pointer" : ""
+          }`}
           onClick={displayMode === "list" ? handleCardClick : undefined}
         >
           <div className="flex items-start justify-between">
-            <div className={`flex-1 min-w-0 ${displayMode === "grid" ? "cursor-pointer" : ""}`}
-                 onClick={displayMode === "grid" ? handleCardClick : undefined}>
+            <div
+              className={`flex-1 min-w-0 ${
+                displayMode === "grid" ? "cursor-pointer" : ""
+              }`}
+              onClick={displayMode === "grid" ? handleCardClick : undefined}
+            >
               <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">
                   {equation.name}
@@ -287,24 +316,21 @@ export default function EnhancedEquationCard({
                   </span>
                 )}
               </div>
-              
+
               {/* LaTeX equation - scales to fit container width and centered */}
               <div className="mb-3">
-                <div 
-                  ref={equationRef}
-                  className="equation-container-auto-scale w-full text-center"
-                >
+                <div className="equation-container-auto-scale w-full text-center">
                   <div className="text-cyan-900 dark:text-cyan-100">
-                    <BlockMath math={equation.latex} />
+                    <LaTeXRenderer
+                      latex={equation.latex}
+                      displayMode={true}
+                      className="equation-display"
+                    />
                   </div>
                 </div>
               </div>
-              
-              <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 sm:line-clamp-none">
-                {equation.description}
-              </p>
             </div>
-            
+
             <div className="ml-2 sm:ml-4 flex items-center gap-1 sm:gap-2 flex-shrink-0">
               {/* Share Button */}
               <motion.button
@@ -323,19 +349,25 @@ export default function EnhancedEquationCard({
                   onClick={handleFavoriteClick}
                   disabled={favoriteLoading}
                   className={`p-1.5 sm:p-2 transition-colors ${
-                    favoriteLoading 
-                      ? 'text-gray-300 cursor-not-allowed' 
-                      : 'text-gray-400 hover:text-red-500'
+                    favoriteLoading
+                      ? "text-gray-300 cursor-not-allowed"
+                      : "text-gray-400 hover:text-red-500"
                   }`}
-                  title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                  title={
+                    isFavorited ? "Remove from favorites" : "Add to favorites"
+                  }
                   whileHover={!favoriteLoading ? { scale: 1.1 } : {}}
                   whileTap={!favoriteLoading ? { scale: 0.9 } : {}}
                 >
                   {favoriteLoading ? (
-                    <motion.div 
+                    <motion.div
                       className="h-4 w-4 sm:h-5 sm:w-5 border-2 border-gray-300 border-t-red-500 rounded-full"
                       animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
                     />
                   ) : isFavorited ? (
                     <HeartIconSolid className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
@@ -353,9 +385,7 @@ export default function EnhancedEquationCard({
                 whileTap={{ scale: 0.9 }}
                 title={getActionTitle()}
               >
-                <div className="h-5 w-5 sm:h-6 sm:w-6">
-                  {getActionIcon()}
-                </div>
+                <div className="h-5 w-5 sm:h-6 sm:w-6">{getActionIcon()}</div>
               </motion.button>
             </div>
           </div>
@@ -372,7 +402,6 @@ export default function EnhancedEquationCard({
               className="overflow-hidden"
             >
               <div className="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                
                 {/* Controls */}
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                   <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -413,13 +442,15 @@ export default function EnhancedEquationCard({
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {equation.variables.map((variable) => {
                     const status = getVariableStatus(variable.symbol);
-                    
+
                     return (
                       <div
                         key={variable.symbol}
-                        className={`p-3 sm:p-4 rounded-lg border-2 transition-colors ${getVariableStatusClass(status)}`}
+                        className={`p-3 sm:p-4 rounded-lg border-2 transition-colors ${getVariableStatusClass(
+                          status
+                        )}`}
                       >
-                        {status === 'result' ? (
+                        {status === "result" ? (
                           <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                               {variable.name}
@@ -439,18 +470,21 @@ export default function EnhancedEquationCard({
                         ) : (
                           <SmartMathInput
                             value={inputs[variable.symbol] || ""}
-                            onChange={(value, parsed) => handleInputChange(variable.symbol, value, parsed)}
+                            onChange={(value, parsed) =>
+                              handleInputChange(variable.symbol, value, parsed)
+                            }
                             label={variable.name}
                             unit={variable.unit}
                             showPreview={true}
                             showSuggestions={false}
+                            allowArrayInput={false}
                           />
                         )}
                       </div>
                     );
                   })}
                 </div>
-                
+
                 {/* Results Summary */}
                 {Object.keys(results).length > 0 && (
                   <div className="mt-6 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-600">
@@ -458,8 +492,10 @@ export default function EnhancedEquationCard({
                       ✨ Results computed in exact symbolic form
                     </h4>
                     <div className="text-xs sm:text-sm text-green-700 dark:text-green-300">
-                      {Object.keys(results).length} variable{Object.keys(results).length !== 1 ? 's' : ''} solved. 
-                      Click the toggle button next to each result to switch between exact and decimal forms.
+                      {Object.keys(results).length} variable
+                      {Object.keys(results).length !== 1 ? "s" : ""} solved.
+                      Click the toggle button next to each result to switch
+                      between exact and decimal forms.
                     </div>
                   </div>
                 )}

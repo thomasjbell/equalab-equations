@@ -1,11 +1,12 @@
+// src/components/display/ToggleableResult.tsx
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { InlineMath } from 'react-katex';
 import { ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
 import { ExactNumber } from '@/types/exactNumber';
 import { useSettings } from '@/lib/contexts/SettingsContext';
 import { NumberFormatter } from '@/lib/utils/numberFormatter';
+import LaTeXRenderer from '../math/LaTeXRenderer';
 
 interface ToggleableResultProps {
   result: ExactNumber;
@@ -58,26 +59,27 @@ export default function ToggleableResult({
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 dark:text-cyan-50 font-medium">Exact:</span>
           <div className="text-lg">
-            <InlineMath math={getSymbolicDisplay()} />
+            <LaTeXRenderer latex={getSymbolicDisplay()} />
           </div>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 dark:text-cyan-50 font-medium">Decimal:</span>
           <div className="text-lg">
-            <InlineMath math={getDecimalDisplay()} />
+            <LaTeXRenderer latex={getDecimalDisplay()} />
           </div>
         </div>
       </div>
     );
   }
 
+  // Get the display value based on current mode
   const displayValue = currentMode === 'symbolic' ? getSymbolicDisplay() : getDecimalDisplay();
   const canToggle = allowToggle && result.type !== 'decimal';
 
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <div className="flex-1 text-lg">
-        <InlineMath math={displayValue} />
+        <LaTeXRenderer latex={displayValue} />
       </div>
       {canToggle && (
         <button

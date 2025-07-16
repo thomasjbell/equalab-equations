@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Questrial&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css');
+
 
 /* Custom backdrop blur support */
 @supports (backdrop-filter: blur(0)) {
@@ -14,12 +16,42 @@
   }
 }
 
+/* KaTeX rendering fixes */
 .katex {
   font-size: 1.1em;
+  line-height: 1.4;
 }
 
 .katex-display {
   margin: 0.5em 0;
+  text-align: center;
+}
+/* Ensure KaTeX renders properly in cards */
+.equation-card .katex-display {
+  margin: 1em 0;
+  padding: 0.5em;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Auto-scaling equation container - centered */
+.equation-container-auto-scale {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  text-align: center;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+.equation-container-auto-scale .katex-display {
+  margin: 0;
+  text-align: center;
+  display: inline-block;
 }
 
 /* Auto-scaling equation container - centered */
@@ -38,7 +70,7 @@
 
 /* Set base equation size - this will be the maximum size */
 .equation-container-auto-scale .katex {
-  font-size: 2rem; /* This is your maximum size */
+  font-size: 1.5rem; /* Increased from 2rem for better readability */
   line-height: 1.2;
 }
 
@@ -49,42 +81,25 @@
   max-width: 100%;
 }
 
-/* KaTeX Color Fixes - Enhanced specificity */
-/* Light mode KaTeX styling - Default */
-html .katex,
-html .katex *,
+/* Enhanced KaTeX Color Fixes - Higher specificity */
+/* Light mode KaTeX styling */
 .katex,
-.katex * {
-  color: #000000 !important;
+.katex *,
+.katex .mord,
+.katex .mop,
+.katex .mbin,
+.katex .mrel,
+.katex .mopen,
+.katex .mclose,
+.katex .mpunct,
+.katex .minner,
+.katex .mspace {
+  color: #1f2937 !important; /* Dark gray for light mode */
 }
 
-/* Dark mode KaTeX styling - Higher specificity */
-html.dark .katex,
-html.dark .katex *,
+/* Dark mode KaTeX styling */
 .dark .katex,
 .dark .katex *,
-[data-theme="dark"] .katex,
-[data-theme="dark"] .katex * {
-  color: #ffffff !important;
-}
-
-/* Specific KaTeX element overrides for dark mode */
-html.dark .katex .mord,
-html.dark .katex .mop,
-html.dark .katex .mbin,
-html.dark .katex .mrel,
-html.dark .katex .mopen,
-html.dark .katex .mclose,
-html.dark .katex .mpunct,
-html.dark .katex .minner,
-html.dark .katex .mspace,
-html.dark .katex .mord.mtight,
-html.dark .katex .mop.mtight,
-html.dark .katex .mbin.mtight,
-html.dark .katex .mrel.mtight,
-html.dark .katex .mopen.mtight,
-html.dark .katex .mclose.mtight,
-html.dark .katex .mpunct.mtight,
 .dark .katex .mord,
 .dark .katex .mop,
 .dark .katex .mbin,
@@ -93,35 +108,55 @@ html.dark .katex .mpunct.mtight,
 .dark .katex .mclose,
 .dark .katex .mpunct,
 .dark .katex .minner,
-.dark .katex .mspace,
-.dark .katex .mord.mtight,
-.dark .katex .mop.mtight,
-.dark .katex .mbin.mtight,
-.dark .katex .mrel.mtight,
-.dark .katex .mopen.mtight,
-.dark .katex .mclose.mtight,
-.dark .katex .mpunct.mtight {
-  color: #ffffff !important;
+.dark .katex .mspace {
+  color: #f9fafb !important; /* Light gray for dark mode */
 }
 
-/* KaTeX fraction lines and sqrt lines for dark mode */
-html.dark .katex .mfrac .frac-line,
+/* KaTeX fraction lines and sqrt lines */
+.katex .mfrac .frac-line {
+  border-bottom-color: #1f2937 !important;
+}
+
 .dark .katex .mfrac .frac-line {
-  border-bottom-color: #ffffff !important;
+  border-bottom-color: #f9fafb !important;
 }
 
-html.dark .katex .sqrt .sqrt-line,
+.katex .sqrt .sqrt-line {
+  border-top-color: #1f2937 !important;
+}
+
 .dark .katex .sqrt .sqrt-line {
-  border-top-color: #ffffff !important;
+  border-top-color: #f9fafb !important;
 }
 
-/* Light mode specific overrides */
-html:not(.dark) .katex .mfrac .frac-line {
-  border-bottom-color: #000000 !important;
+/* KaTeX matrix delimiters */
+.katex .vlist-t {
+  color: inherit !important;
 }
 
-html:not(.dark) .katex .sqrt .sqrt-line {
-  border-top-color: #000000 !important;
+/* Responsive equation sizing */
+.equation-container-auto-scale .katex {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+@media (max-width: 768px) {
+  .equation-container-auto-scale .katex {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .equation-container-auto-scale .katex {
+    font-size: 1rem;
+  }
+}
+/* Ensure long equations can scroll horizontally on mobile */
+@media (max-width: 640px) {
+  .equation-container-auto-scale {
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
 }
 
 body {
