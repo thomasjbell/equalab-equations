@@ -11,20 +11,8 @@ export interface ParsedInput {
 }
 
 export class InputParser {
-  static normalize(raw: string): string {
-    return raw
-      .replace(/π/g, 'pi')
-      .replace(/√(\d+)/g, 'sqrt($1)')
-      .replace(/×/g, '*')
-      .replace(/÷/g, '/')
-      .replace(/−/g, '-')
-      .replace(/²/g, '^2')
-      .replace(/³/g, '^3')
-      .replace(/¹/g, '^1');
-  }
-
   static parseInput(input: string): ParsedInput {
-    const trimmed = this.normalize(input).trim();
+    const trimmed = input.trim();
     
     if (!trimmed) {
       return {

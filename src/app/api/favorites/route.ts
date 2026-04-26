@@ -2,36 +2,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  const cookieStore = cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-  
-  const { id } = await context.params;
-  
-  const { data, error } = await supabase
-    .from('equations')
-    .select(`
-      *,
-      profiles:author_id (name, id)
-    `)
-    .eq('id', id)
-    .eq('is_public', true)
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 404 });
-  }
-
-  return NextResponse.json(data);
-}
-
-export async function PUT(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest) {
   const cookieStore = cookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   
@@ -41,16 +12,15 @@ export async function PUT(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = await context.params;
-
   try {
-    const body = await request.json();
+    const { equation_id } = await request.json();
     
     const { data, error } = await supabase
-      .from('equations')
-      .update(body)
-      .eq('id', id)
-      .eq('author_id', user.id)
+      .from('user_favorites')
+      .insert({
+        user_id: user.id,
+        equation_id,
+      })
       .select()
       .single();
 
@@ -64,10 +34,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest) {
   const cookieStore = cookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   
@@ -77,13 +44,18 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = await context.params;
+  const { searchParams } = new URL(request.url);
+  const equation_id = searchParams.get('equation_id');
+
+  if (!equation_id) {
+    return NextResponse.json({ error: 'equation_id is required' }, { status: 400 });
+  }
 
   const { error } = await supabase
-    .from('equations')
+    .from('user_favorites')
     .delete()
-    .eq('id', id)
-    .eq('author_id', user.id);
+    .eq('user_id', user.id)
+    .eq('equation_id', equation_id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

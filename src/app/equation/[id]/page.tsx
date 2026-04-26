@@ -1,21 +1,106 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { getEquationById } from "@/data/equations";
+import { createClient } from "@/lib/supabase/client";
+import { DatabaseEquation } from "@/lib/services/equationSolver";
 import EnhancedEquationCard from "@/components/EnhancedEquationCard";
-import { useFavourites } from "@/lib/hooks/useFavourites";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
 export default function EquationPage() {
   const params = useParams();
-  const id = params.id as string;
+  const [equation, setEquation] = useState<DatabaseEquation | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const supabase = createClient();
 
-  const equation = useMemo(() => getEquationById(id), [id]);
-  const { isFavourite, toggleFavourite } = useFavourites();
+  useEffect(() => {
+    if (params.id) {
+      fetchEquation(params.id as string);
+    }
+  }, [params.id]);
 
-  if (!equation) {
+  const fetchEquation = async (id: string) => {
+    try {
+      setLoading(true);
+      const { data, error: fetchError } = await supabase
+        .from('equations')
+        .select('*')
+        .eq('id', id)
+        .eq('is_public', true)
+        .single();
+
+      if (fetchError) throw fetchError;
+      setEquation(data);
+
+      // Update page metadata
+      if (data) {
+        document.title = `${data.name} - ${data.category} Equation - EquaLab`;
+        
+        // Update meta description
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+          metaDescription.setAttribute('content', 
+            `${data.description} - Interactive ${data.category.toLowerCase()} equation solver with exact symbolic computation.`
+          );
+        }
+
+        // Add structured data for the equation
+        const equationStructuredData = {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "name": `${data.name} - ${data.category} Equation`,
+          "description": data.description,
+          "url": `https://equations.equalab.uk/equation/${data.id}`,
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "EquaLab Equations",
+            "url": "https://equations.equalab.uk"
+          },
+          "mainEntity": {
+            "@type": "MathSolver",
+            "name": data.name,
+            "description": data.description,
+            "category": data.category,
+            "equation": data.latex
+          }
+        };
+
+        // Remove existing structured data script if any
+        const existingScript = document.querySelector('script[data-equation-schema]');
+        if (existingScript) {
+          existingScript.remove();
+        }
+
+        // Add new structured data
+        const script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.setAttribute('data-equation-schema', 'true');
+        script.textContent = JSON.stringify(equationStructuredData);
+        document.head.appendChild(script);
+      }
+    } catch (err) {
+      console.error('Error fetching equation:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch equation');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-blue-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-xl text-gray-600 dark:text-gray-400">Loading equation...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !equation) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-blue-100 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4 py-8">
@@ -46,36 +131,49 @@ export default function EquationPage() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
-          {/* Breadcrumb */}
+          {/* Breadcrumb for SEO */}
           <nav className="text-sm text-gray-600 dark:text-gray-400">
             <ol className="flex items-center space-x-2">
-              <li><Link href="/" className="hover:text-cyan-600">Home</Link></li>
+              <li>
+                <Link href="/" className="hover:text-cyan-600">
+                  Home
+                </Link>
+              </li>
               <li>/</li>
               <li>
-                <Link href={`/?category=${encodeURIComponent(equation.category)}`} className="hover:text-cyan-600">
+                <Link 
+                  href={`/?category=${encodeURIComponent(equation.category)}`}
+                  className="hover:text-cyan-600"
+                >
                   {equation.category}
                 </Link>
               </li>
               <li>/</li>
-              <li className="text-gray-900 dark:text-white font-medium">{equation.name}</li>
+              <li className="text-gray-900 dark:text-white font-medium">
+                {equation.name}
+              </li>
             </ol>
           </nav>
 
+          {/* Back Link */}
           <div>
-            <Link href="/" className="text-cyan-600 dark:text-cyan-400 hover:underline text-sm font-medium">
+            <Link
+              href="/"
+              className="text-cyan-600 dark:text-cyan-400 hover:underline text-sm font-medium"
+            >
               ← Back to Equation Library
             </Link>
           </div>
 
+          {/* Equation Card - Expanded by default */}
           <EnhancedEquationCard
             equation={equation}
             isExpanded={true}
-            onToggle={() => {}}
-            isFavorited={isFavourite(equation.id)}
-            onFavoriteToggle={() => toggleFavourite(equation.id)}
-            displayMode="list"
+            onToggle={() => {}} // No toggle on individual page
+            showFavoriteButton={false} // Disabled for direct links
           />
 
+          {/* Call to Action */}
           <motion.div
             className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-center"
             initial={{ opacity: 0, y: 20 }}
