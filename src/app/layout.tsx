@@ -1,13 +1,18 @@
 import "./globals.css";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { AuthProvider } from "@/lib/auth/AuthContext";
 import { SettingsProvider } from "@/lib/contexts/SettingsContext";
-import { Inter } from "next/font/google";
-import { icons } from "lucide-react";
-import { url } from "inspector";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import AnimationWrapper from "@/components/AnimationWrapper";
+import { Urbanist } from "next/font/google";
+import { cn } from "@/lib/utils";
 
-const inter = Inter({ subsets: ["latin"] });
+const urbanist = Urbanist({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  weight: ['300', '400', '500', '600', '700', '800'],
+  display: 'swap',
+});
 
 export const metadata = {
   title: "EquaLab Equations - Mathematical Equation Solver",
@@ -87,7 +92,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={cn("dark font-sans", urbanist.variable)}>
       <head>
         <link
           rel="stylesheet"
@@ -113,14 +118,16 @@ export default function RootLayout({
           content="your-verification-code"
         />
       </head>
-      <body className={`dark:bg-gray-900 ${inter.className}`}>
-        <AuthProvider>
-          <SettingsProvider>
-            <Navbar />
-            {children}
-            <Footer />
-          </SettingsProvider>
-        </AuthProvider>
+      <body>
+        <SettingsProvider>
+          <AnimationWrapper>
+            <TooltipProvider>
+              <Navbar />
+              {children}
+              <Footer />
+            </TooltipProvider>
+          </AnimationWrapper>
+        </SettingsProvider>
       </body>
     </html>
   );

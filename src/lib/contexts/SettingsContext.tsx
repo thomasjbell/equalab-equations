@@ -1,8 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { useAuth } from '@/lib/auth/AuthContext';
+import { LocalStorageService } from '@/lib/storage/localStorageService';
 
 export interface UserSettings {
   theme: 'light' | 'dark' | 'system';
@@ -13,10 +12,11 @@ export interface UserSettings {
   default_result_mode: 'symbolic' | 'decimal' | 'both';
   animations_enabled: boolean;
   auto_solve: boolean;
-  favorite_categories: string[];
+  angle_mode: 'degrees' | 'radians';
+  number_mode: 'real' | 'complex';
 }
 
-const defaultSettings: UserSettings = {
+export const defaultSettings: UserSettings = {
   theme: 'system',
   decimal_places: 4,
   significant_figures: 6,
@@ -25,246 +25,88 @@ const defaultSettings: UserSettings = {
   default_result_mode: 'symbolic',
   animations_enabled: true,
   auto_solve: true,
-  favorite_categories: [],
+  angle_mode: 'degrees',
+  number_mode: 'real',
 };
 
 interface SettingsContextType {
   settings: UserSettings;
-  updateSetting: <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => Promise<void>;
-  resetSettings: () => Promise<void>;
+  updateSetting: <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => void;
+  resetSettings: () => void;
   loading: boolean;
-  saving: boolean;
-  lastSaved: Date | null;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
+function debounce<T extends (...args: any[]) => any>(fn: T, wait: number) {
+  let timer: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), wait);
+  };
+}
+
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<UserSettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [saveQueue, setSaveQueue] = useState<UserSettings | null>(null);
-  
-  const { user } = useAuth();
-  const supabase = createClient();
 
-  // Debounced save function
-  const debouncedSave = useCallback(
-    debounce(async (settingsToSave: UserSettings) => {
-      if (!user) return;
-      
-      try {
-        setSaving(true);
-        
-        const { error } = await supabase
-          .from('user_settings')
-          .upsert({
-            user_id: user.id,
-            ...settingsToSave,
-          }, {
-            onConflict: 'user_id'
-          });
-
-        if (error) {
-          console.error('Error saving settings to database:', error);
-          throw error;
-        }
-        
-        setLastSaved(new Date());
-        setSaveQueue(null);
-      } catch (error) {
-        console.error('Failed to save settings:', error);
-        // Could add toast notification here
-      } finally {
-        setSaving(false);
-      }
-    }, 1000), // 1 second debounce
-    [user, supabase]
-  );
-
-  // Load settings on mount and user change
+  // Load from localStorage on mount
   useEffect(() => {
-    loadSettings();
-  }, [user]);
-
-  // Save settings when they change (for logged-in users)
-  useEffect(() => {
-    if (user && settings !== defaultSettings && !loading) {
-      // Don't save if we're still loading initial settings
-      debouncedSave(settings);
-    }
-  }, [settings, user, loading, debouncedSave]);
-
-  // Apply theme changes immediately
-  useEffect(() => {
-    applyTheme(settings.theme);
-  }, [settings.theme]);
-
-  const loadSettings = async () => {
-    setLoading(true);
-    
-    if (user) {
-      // Load from database
-      try {
-        const { data, error } = await supabase
-          .from('user_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error loading settings:', error);
-        } else if (data) {
-          const loadedSettings: UserSettings = {
-            theme: data.theme || defaultSettings.theme,
-            decimal_places: data.decimal_places ?? defaultSettings.decimal_places,
-            significant_figures: data.significant_figures ?? defaultSettings.significant_figures,
-            number_format: data.number_format || defaultSettings.number_format,
-            default_equation_view: data.default_equation_view || defaultSettings.default_equation_view,
-            default_result_mode: data.default_result_mode || defaultSettings.default_result_mode,
-            animations_enabled: data.animations_enabled ?? defaultSettings.animations_enabled,
-            auto_solve: data.auto_solve ?? defaultSettings.auto_solve,
-            favorite_categories: data.favorite_categories || defaultSettings.favorite_categories,
-          };
-          setSettings(loadedSettings);
-          setLastSaved(new Date(data.updated_at));
-        } else {
-          // No settings found, create default ones
-          setSettings(defaultSettings);
-          debouncedSave(defaultSettings);
-        }
-      } catch (error) {
-        console.error('Error loading settings:', error);
-        setSettings(defaultSettings);
-      }
-    } else {
-      // Load from localStorage
-      try {
-        const saved = localStorage.getItem('equationlab_settings');
-        if (saved) {
-          const parsedSettings = JSON.parse(saved);
-          setSettings({ ...defaultSettings, ...parsedSettings });
-        } else {
-          setSettings(defaultSettings);
-        }
-      } catch (error) {
-        console.error('Error loading settings from localStorage:', error);
-        setSettings(defaultSettings);
-      }
-    }
-    
+    const saved = LocalStorageService.get<Partial<UserSettings>>('settings', {});
+    setSettings({ ...defaultSettings, ...saved });
     setLoading(false);
-  };
-
-  const saveToLocalStorage = useCallback((newSettings: UserSettings) => {
-    try {
-      localStorage.setItem('equationlab_settings', JSON.stringify(newSettings));
-    } catch (error) {
-      console.error('Error saving settings to localStorage:', error);
-    }
   }, []);
 
-  const updateSetting = async <K extends keyof UserSettings>(
-    key: K,
-    value: UserSettings[K]
-  ) => {
-    // Optimistic update - update UI immediately
-    const newSettings = { ...settings, [key]: value };
-    setSettings(newSettings);
-
-    // Save to appropriate storage
-    if (user) {
-      // For logged-in users, the useEffect will handle the debounced save
-      setSaveQueue(newSettings);
-    } else {
-      // For anonymous users, save to localStorage immediately
-      saveToLocalStorage(newSettings);
-    }
-  };
-
-  const resetSettings = async () => {
-    setSettings(defaultSettings);
-    
-    if (user) {
-      setSaving(true);
-      try {
-        const { error } = await supabase
-          .from('user_settings')
-          .upsert({
-            user_id: user.id,
-            ...defaultSettings,
-          }, {
-            onConflict: 'user_id'
-          });
-
-        if (error) {
-          console.error('Error resetting settings:', error);
-          throw error;
-        }
-        
-        setLastSaved(new Date());
-      } catch (error) {
-        console.error('Failed to reset settings:', error);
-      } finally {
-        setSaving(false);
-      }
-    } else {
-      saveToLocalStorage(defaultSettings);
-    }
-  };
-
-  const applyTheme = (theme: UserSettings['theme']) => {
+  // Apply theme whenever it changes
+  useEffect(() => {
+    if (loading) return;
     const root = document.documentElement;
-    
-    // Remove any existing theme classes
     root.classList.remove('dark');
-    
-    if (theme === 'dark') {
+    if (settings.theme === 'dark') {
       root.classList.add('dark');
-    } else if (theme === 'light') {
-      // Light mode is default, no class needed
-    } else {
-      // System preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (prefersDark) {
+    } else if (settings.theme === 'system') {
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
         root.classList.add('dark');
       }
     }
-  };
+  }, [settings.theme, loading]);
+
+  // Apply/remove no-animations class
+  useEffect(() => {
+    if (loading) return;
+    document.documentElement.classList.toggle('no-animations', !settings.animations_enabled);
+  }, [settings.animations_enabled, loading]);
+
+  // Debounced save to localStorage
+  const saveToStorage = useCallback(
+    debounce((s: UserSettings) => {
+      LocalStorageService.set('settings', s);
+    }, 500),
+    []
+  );
+
+  const updateSetting = useCallback(<K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
+    setSettings((prev) => {
+      const next = { ...prev, [key]: value };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  const resetSettings = useCallback(() => {
+    setSettings(defaultSettings);
+    LocalStorageService.set('settings', defaultSettings);
+  }, []);
 
   return (
-    <SettingsContext.Provider
-      value={{
-        settings,
-        updateSetting,
-        resetSettings,
-        loading,
-        saving,
-        lastSaved,
-      }}
-    >
+    <SettingsContext.Provider value={{ settings, updateSetting, resetSettings, loading }}>
       {children}
     </SettingsContext.Provider>
   );
 }
 
 export const useSettings = () => {
-  const context = useContext(SettingsContext);
-  if (context === undefined) {
-    throw new Error('useSettings must be used within a SettingsProvider');
-  }
-  return context;
+  const ctx = useContext(SettingsContext);
+  if (!ctx) throw new Error('useSettings must be used within a SettingsProvider');
+  return ctx;
 };
-
-// Debounce utility function
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-}
